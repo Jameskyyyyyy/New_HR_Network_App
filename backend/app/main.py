@@ -16,7 +16,7 @@ from .models import entities  # noqa: F401 — registers all ORM models
 from .routers import auth, account, campaigns, contacts, drafts, templates, send
 from .services.queue_worker import process_due_send_jobs
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND_DIR = PROJECT_ROOT / "frontend" / "static"
 
 logging.basicConfig(level=logging.INFO)
