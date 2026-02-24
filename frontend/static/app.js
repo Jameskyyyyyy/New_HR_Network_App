@@ -33,7 +33,11 @@ async function api(method, path, body) {
   }
   if (!r.ok) {
     const err = await r.json().catch(() => ({ detail: 'Request failed' }));
-    throw new Error(err.detail || 'Request failed');
+    const detail = err.detail;
+    const msg = Array.isArray(detail)
+      ? detail.map(d => d.msg || JSON.stringify(d)).join('; ')
+      : (typeof detail === 'string' ? detail : 'Request failed');
+    throw new Error(msg || 'Request failed');
   }
   if (r.status === 204) return null;
   return r.json();
@@ -435,13 +439,13 @@ async function generateContacts() {
   const seniority = [...document.querySelectorAll('.seniority-chip.selected')].map(el => el.textContent.trim());
 
   const payload = {
-    campaign_name: name,
+    name,
     target_count: targetCount,
-    companies: State.tags.companies,
-    title_keywords: State.tags.titles,
-    locations: State.tags.locations,
-    schools: State.tags.schools,
-    seniority_levels: seniority,
+    company_list: State.tags.companies.join(','),
+    title_keywords: State.tags.titles.join(','),
+    location_list: State.tags.locations.join(','),
+    target_schools: State.tags.schools.join(','),
+    seniority_levels: seniority.join(','),
     regenerate: State.switches.regenerate,
     avoid_duplicates: State.switches['avoid-dups'],
   };
