@@ -4,7 +4,7 @@ import logging
 import threading
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -90,7 +90,7 @@ def create_app() -> FastAPI:
     import requests as _requests
 
     @app.get("/auth/google/callback")
-    def google_callback_root(request):
+    def google_callback_root(request: Request):
         from .routers.auth import google_callback
         return google_callback(request, request.query_params.get("code"), request.query_params.get("error"))
 
