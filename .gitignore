@@ -1,0 +1,16 @@
+.env
+*.db
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.idea/
+.vscode/
+storage/resumes/*
+storage/outbox/*
+!storage/resumes/.gitkeep
+!storage/outbox/.gitkeep
+*.egg-info/
+dist/
+build/
+.DS_Store

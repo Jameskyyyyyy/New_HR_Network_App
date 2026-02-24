@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance Recruiting Killer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">FK</div>
+      <div class="brand-text">
+        <div class="brand-name">Finance Recruiting</div>
+        <div class="brand-sub">Networking Killer</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </button>
+      <button class="nav-item" onclick="showPage('campaigns')" id="nav-campaigns">
+        <span class="nav-icon">📋</span> Campaigns
+        <span class="nav-badge" id="campaigns-badge">0</span>
+      </button>
+      <button class="nav-item" onclick="showPage('templates')" id="nav-templates">
+        <span class="nav-icon">📄</span> Templates
+      </button>
+      <button class="nav-item" onclick="showPage('billing')" id="nav-billing">
+        <span class="nav-icon">💳</span> Billing
+      </button>
+      <button class="nav-item" onclick="showPage('account')" id="nav-account">
+        <span class="nav-icon">👤</span> Account
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="showPage('help')">
+        <span class="nav-icon">❓</span> Help &amp; Docs
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ── PAGE: DASHBOARD ─────────────────────────────────────────────────── -->
+    <div id="page-dashboard" class="page-section">
+      <!-- Welcome banner -->
+      <div style="background:var(--black);padding:20px 32px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:white;" id="welcome-msg">Good morning 👋</div>
+          <div style="font-size:13px;color:#888;margin-top:2px;" id="welcome-sub">Here's your outreach overview.</div>
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="openNewCampaign()">+ New Campaign</button>
+      </div>
+
+      <div class="page-content">
+        <!-- Stats -->
+        <div class="stats-row cols-5">
+          <div class="stat-card blue">
+            <div class="stat-label">Campaigns</div>
+            <div class="stat-value" id="stat-campaigns">0</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-label">Selected</div>
+            <div class="stat-value" id="stat-selected">0</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Approved</div>
+            <div class="stat-value" id="stat-approved">0</div>
+          </div>
+          <div class="stat-card teal">
+            <div class="stat-label">Sent</div>
+            <div class="stat-value" id="stat-sent">0</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-label">Queued</div>
+            <div class="stat-value" id="stat-queued">0</div>
+          </div>
+        </div>
+
+        <!-- Chart + mini stats -->
+        <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Email Activity</span>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-ghost" style="height:28px;font-size:11px;" onclick="setChartRange(7)" id="chart-7d">7D</button>
+                <button class="btn btn-ghost" style="height:28px;font-size:11px;" onclick="setChartRange(30)" id="chart-30d">30D</button>
+                <button class="btn btn-ghost" style="height:28px;font-size:11px;" onclick="setChartRange(90)" id="chart-90d">90D</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <canvas id="emailChart" height="100"></canvas>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="stat-card">
+              <div class="stat-label">Avg Fit Score</div>
+              <div class="stat-value" id="stat-avg-fit" style="color:var(--amber)">—</div>
+              <div class="stat-sub">Higher = better contacts</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Open Rate</div>
+              <div class="stat-value text-gray">—</div>
+              <div class="stat-sub">Tracking coming soon</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Reply Rate</div>
+              <div class="stat-value text-gray">—</div>
+              <div class="stat-sub">Tracking coming soon</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent campaigns table -->
+        <div class="card mt-16" style="margin-top:20px;">
+          <div class="card-header">
+            <span class="card-title">Recent Campaigns</span>
+            <button class="btn btn-ghost" onclick="showPage('campaigns')" style="font-size:12px;">View All →</button>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Sent</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody id="recent-campaigns-tbody">
+                <tr><td colspan="4" style="text-align:center;color:var(--gray-400);padding:32px;">No campaigns yet. <a href="#" onclick="openNewCampaign()" style="color:var(--amber);">Create your first one →</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: CAMPAIGNS LIST ─────────────────────────────────────────────── -->
+    <div id="page-campaigns" class="page-section hidden">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Campaigns</div>
+        </div>
+        <button class="btn btn-primary" onclick="openNewCampaign()">+ New Campaign</button>
+      </div>
+
+      <div class="page-content">
+        <!-- Filter tabs -->
+        <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--gray-200);padding-bottom:12px;">
+          <button class="btn btn-black" id="tab-all" onclick="filterCampaigns('all')">All</button>
+          <button class="btn btn-ghost" id="tab-active" onclick="filterCampaigns('active')">Active</button>
+          <button class="btn btn-ghost" id="tab-draft" onclick="filterCampaigns('draft')">Drafts</button>
+          <button class="btn btn-ghost" id="tab-ended" onclick="filterCampaigns('ended')">Ended</button>
+
+          <div style="margin-left:auto;">
+            <input type="text" class="form-input" style="width:220px;" placeholder="🔍  Search campaigns..." id="campaign-search" oninput="filterCampaigns()">
+          </div>
+        </div>
+
+        <!-- Campaigns table -->
+        <div class="card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Campaign Name</th>
+                  <th>Contacts</th>
+                  <th>Sent</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="campaigns-tbody">
+                <tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:40px;">No campaigns found.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: CAMPAIGN WIZARD ─────────────────────────────────────────────── -->
+    <div id="page-wizard" class="page-section hidden">
+      <!-- Step bar -->
+      <div class="step-bar" id="wizard-step-bar">
+        <div class="step-item">
+          <div class="step-circle current" id="step-circle-1">1</div>
+          <span class="step-text current" id="step-text-1">Campaign Setup</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-circle pending" id="step-circle-2">2</div>
+          <span class="step-text" id="step-text-2">Draft Emails</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-circle pending" id="step-circle-3">3</div>
+          <span class="step-text" id="step-text-3">Preview &amp; Edit</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-circle pending" id="step-circle-4">4</div>
+          <span class="step-text" id="step-text-4">Schedule &amp; Send</span>
+        </div>
+      </div>
+
+      <!-- Step 1: Campaign Setup -->
+      <div id="wizard-step-1" class="page-content">
+        <!-- Stats row -->
+        <div class="stats-row cols-4 mb-16">
+          <div class="stat-card"><div class="stat-label">Contacts Found</div><div class="stat-value" id="w-stat-contacts">0</div></div>
+          <div class="stat-card"><div class="stat-label">Selected</div><div class="stat-value" id="w-stat-selected">0</div></div>
+          <div class="stat-card"><div class="stat-label">Companies</div><div class="stat-value" id="w-stat-companies">0</div></div>
+          <div class="stat-card amber"><div class="stat-label">Avg Fit</div><div class="stat-value" id="w-stat-fit" style="color:var(--amber)">—</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Campaign Setup</span>
+            <button class="btn btn-ghost" onclick="showPage('campaigns')">← Back</button>
+          </div>
+          <div class="card-body">
+            <!-- Row 1 -->
+            <div class="two-col mb-16">
+              <div class="form-group">
+                <label class="form-label">Campaign Name *</label>
+                <input type="text" class="form-input" id="w-name" placeholder="e.g. Goldman Sachs NYC Summer Analyst 2026" maxlength="100">
+                <div style="font-size:11px;color:var(--gray-400);margin-top:4px;text-align:right;" id="w-name-count">0/100</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Target Number of Contacts</label>
+                <input type="number" class="form-input" id="w-target-count" value="10" min="1" max="100">
+              </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-title mb-12">Contact Targeting</div>
+
+            <!-- Row 2 -->
+            <div class="two-col mb-16">
+              <div class="form-group">
+                <label class="form-label">Company List</label>
+                <div class="tag-input-wrapper" id="companies-wrapper" onclick="document.getElementById('companies-input').focus()">
+                  <div class="tag-chips" id="companies-chips"></div>
+                  <input type="text" class="tag-text-input" id="companies-input" placeholder="Type company name + Enter">
+                </div>
+                <div class="tag-suggestions" id="companies-suggestions">
+                  <span class="tag-suggestion" onclick="addTag('companies','Goldman Sachs')">Goldman Sachs</span>
+                  <span class="tag-suggestion" onclick="addTag('companies','BlackRock')">BlackRock</span>
+                  <span class="tag-suggestion" onclick="addTag('companies','Morgan Stanley')">Morgan Stanley</span>
+                  <span class="tag-suggestion" onclick="addTag('companies','Citadel')">Citadel</span>
+                  <span class="tag-suggestion" onclick="addTag('companies','KKR')">KKR</span>
+                  <span class="tag-suggestion" onclick="addTag('companies','Blackstone')">Blackstone</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Job Title Keywords</label>
+                <div class="tag-input-wrapper" id="titles-wrapper" onclick="document.getElementById('titles-input').focus()">
+                  <div class="tag-chips" id="titles-chips"></div>
+                  <input type="text" class="tag-text-input" id="titles-input" placeholder="Type title keyword + Enter">
+                </div>
+                <div class="tag-suggestions" id="titles-suggestions">
+                  <span class="tag-suggestion" onclick="addTag('titles','Investment Analyst')">Investment Analyst</span>
+                  <span class="tag-suggestion" onclick="addTag('titles','Investment Associate')">Investment Associate</span>
+                  <span class="tag-suggestion" onclick="addTag('titles','PE Analyst')">PE Analyst</span>
+                  <span class="tag-suggestion" onclick="addTag('titles','Fixed Income')">Fixed Income</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="two-col mb-16">
+              <div class="form-group">
+                <label class="form-label">Location / City</label>
+                <div class="tag-input-wrapper" id="locations-wrapper" onclick="document.getElementById('locations-input').focus()">
+                  <div class="tag-chips" id="locations-chips"></div>
+                  <input type="text" class="tag-text-input" id="locations-input" placeholder="Type city + Enter">
+                </div>
+                <div class="tag-suggestions">
+                  <span class="tag-suggestion" onclick="addTag('locations','New York, NY')">New York, NY</span>
+                  <span class="tag-suggestion" onclick="addTag('locations','San Francisco, CA')">San Francisco, CA</span>
+                  <span class="tag-suggestion" onclick="addTag('locations','Chicago, IL')">Chicago, IL</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Target Schools <span style="color:var(--gray-400);font-weight:400;text-transform:none;font-size:11px;">(optional — boosts fit score)</span></label>
+                <div class="tag-input-wrapper" id="schools-wrapper" onclick="document.getElementById('schools-input').focus()">
+                  <div class="tag-chips" id="schools-chips"></div>
+                  <input type="text" class="tag-text-input" id="schools-input" placeholder="Type school + Enter">
+                </div>
+                <div class="tag-suggestions">
+                  <span class="tag-suggestion" onclick="addTag('schools','Columbia University')">Columbia</span>
+                  <span class="tag-suggestion" onclick="addTag('schools','University of Chicago')">UChicago</span>
+                  <span class="tag-suggestion" onclick="addTag('schools','NYU Stern')">NYU Stern</span>
+                  <span class="tag-suggestion" onclick="addTag('schools','Wharton')">Wharton</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seniority -->
+            <div class="form-group mb-16">
+              <label class="form-label">Seniority Levels</label>
+              <div class="seniority-chips" id="seniority-chips">
+                <div class="seniority-chip selected" onclick="toggleSeniority(this)">Analyst</div>
+                <div class="seniority-chip selected" onclick="toggleSeniority(this)">Associate</div>
+                <div class="seniority-chip" onclick="toggleSeniority(this)">VP</div>
+                <div class="seniority-chip" onclick="toggleSeniority(this)">Director</div>
+                <div class="seniority-chip" onclick="toggleSeniority(this)">Executive Director</div>
+                <div class="seniority-chip" onclick="toggleSeniority(this)">Managing Director</div>
+              </div>
+            </div>
+
+            <!-- Options + Generate button -->
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <label class="toggle-wrap">
+                  <div class="toggle" id="toggle-regenerate" onclick="toggleSwitch('regenerate')"></div>
+                  <span class="toggle-label">Regenerate (replace existing contacts)</span>
+                </label>
+                <label class="toggle-wrap">
+                  <div class="toggle on" id="toggle-avoid-dups" onclick="toggleSwitch('avoid-dups')"></div>
+                  <span class="toggle-label">Avoid duplicates (previously emailed)</span>
+                </label>
+              </div>
+              <button class="btn btn-primary btn-xl" id="btn-generate" onclick="generateContacts()" style="min-width:240px;">
+                🔍  Generate Contacts
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contacts table (appears after generation) -->
+        <div id="contacts-table-section" class="hidden" style="margin-top:24px;">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Review &amp; Select Contacts</div>
+                <div style="font-size:12px;color:var(--gray-400);margin-top:2px;" id="contacts-subtitle">0 contacts found</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <button class="btn btn-ghost" onclick="exportCSV()" style="font-size:12px;">⬇ CSV</button>
+                <button class="btn btn-primary" id="btn-draft-emails" onclick="goToStep2()" disabled>
+                  Draft Emails → (<span id="selected-count">0</span>)
+                </button>
+              </div>
+            </div>
+
+            <!-- Filters -->
+            <div style="padding:12px 16px;border-bottom:1px solid var(--gray-100);display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              <input class="form-input" style="width:160px;height:32px;" placeholder="🔍 title..." id="filter-title" oninput="applyContactFilters()">
+              <input class="form-input" style="width:160px;height:32px;" placeholder="🔍 company..." id="filter-company" oninput="applyContactFilters()">
+              <input class="form-input" style="width:140px;height:32px;" placeholder="🔍 city..." id="filter-city" oninput="applyContactFilters()">
+              <input class="form-input" style="width:120px;height:32px;" type="number" placeholder="Min Fit: 0" id="filter-fit" oninput="applyContactFilters()">
+              <div style="margin-left:auto;display:flex;gap:8px;">
+                <button class="btn btn-ghost" style="height:32px;font-size:12px;" onclick="selectTop(20)">Select Top 20</button>
+                <button class="btn btn-ghost" style="height:32px;font-size:12px;" onclick="clearSelections()">Clear All</button>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th><input type="checkbox" class="checkbox-amber" id="select-all-cb" onchange="toggleSelectAll(this)"></th>
+                    <th>#</th>
+                    <th>Contact</th>
+                    <th>Title</th>
+                    <th>Company</th>
+                    <th>Location</th>
+                    <th>LinkedIn</th>
+                    <th>Email</th>
+                    <th>Fit Score</th>
+                  </tr>
+                </thead>
+                <tbody id="contacts-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Upload Resume + Draft -->
+      <div id="wizard-step-2" class="page-content hidden">
+        <div id="step2-success-banner" class="success-note mb-16 hidden">
+          ✓ Saved outreach list. Select a template and upload your resume to continue.
+        </div>
+
+        <div class="stats-row cols-3 mb-16">
+          <div class="stat-card teal"><div class="stat-label">Selected Contacts</div><div class="stat-value" id="s2-selected">0</div></div>
+          <div class="stat-card"><div class="stat-label">Existing Drafts</div><div class="stat-value" id="s2-drafts">0</div></div>
+          <div class="stat-card" id="s2-resume-card"><div class="stat-label">Resume</div><div class="stat-value text-red" id="s2-resume-status">Not Attached</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Upload Email Draft</span>
+            <button class="btn btn-ghost" onclick="goToStep(1)">← Back</button>
+          </div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--gray-500);margin-bottom:24px;">
+              Upload your resume and select an email template. Clicking Continue will create one editable draft per selected contact.
+            </p>
+
+            <div class="two-col">
+              <!-- Resume upload -->
+              <div>
+                <label class="form-label">Resume (PDF/DOCX) *</label>
+                <div class="upload-zone" id="upload-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" onclick="document.getElementById('resume-file-input').click()">
+                  <div class="upload-icon">📄</div>
+                  <div class="upload-text">Drop your resume here, or click to browse</div>
+                  <div class="upload-sub">PDF or DOCX · Max 10MB</div>
+                </div>
+                <input type="file" id="resume-file-input" accept=".pdf,.docx" style="display:none" onchange="handleFileSelect(event)">
+                <div id="upload-success" class="upload-success hidden" style="margin-top:12px;">
+                  <span style="font-size:24px;">📄</span>
+                  <div style="flex:1;">
+                    <div class="upload-success-name" id="resume-filename">resume.pdf</div>
+                    <div class="upload-success-meta" id="resume-meta">Uploaded ✓</div>
+                  </div>
+                  <button class="btn btn-danger" style="height:28px;font-size:11px;" onclick="removeResume()">Remove</button>
+                </div>
+                <div class="info-note mt-8">
+                  This resume will be attached to each outbound email
+                </div>
+              </div>
+
+              <!-- Template selection -->
+              <div>
+                <div class="form-group">
+                  <label class="form-label">Template Source</label>
+                  <select class="form-select" id="template-source-select" onchange="updateTemplateSection()">
+                    <option value="saved">Saved Template (Handlebars)</option>
+                    <option value="custom">Custom (no template)</option>
+                  </select>
+                </div>
+                <div class="form-group" id="template-select-group">
+                  <label class="form-label">Email Template</label>
+                  <select class="form-select" id="template-select">
+                    <option value="">Loading templates...</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--gray-100);">
+              <span style="font-size:12px;color:var(--gray-400);">⌘ Enter to continue</span>
+              <button class="btn btn-primary btn-xl" onclick="generateDrafts()">
+                Continue → Preview &amp; Edit →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Draft Preview & Edit -->
+      <div id="wizard-step-3" class="hidden" style="display:flex;flex-direction:column;height:calc(100vh - 130px);">
+        <div style="padding:12px 20px;background:white;border-bottom:1px solid var(--gray-200);">
+          <div id="step3-success-banner" class="success-note hidden">✓ Generated drafts successfully.</div>
+          <div class="stats-row cols-3" style="margin:12px 0 0;">
+            <div class="stat-card"><div class="stat-label">Drafts</div><div class="stat-value" id="s3-total">0</div></div>
+            <div class="stat-card teal"><div class="stat-label">Approved</div><div class="stat-value" id="s3-approved">0</div></div>
+            <div class="stat-card amber"><div class="stat-label">Pending</div><div class="stat-value" id="s3-pending">0</div></div>
+          </div>
+        </div>
+
+        <div class="draft-split">
+          <!-- Left: draft list -->
+          <div class="draft-list">
+            <div class="draft-list-header">
+              Draft List <span class="nav-badge" id="draft-list-count">0</span>
+            </div>
+            <div class="draft-list-actions">
+              <button class="btn btn-teal full-width" onclick="approveSelected()">✓ Approve Selected</button>
+              <button class="btn btn-black full-width" onclick="approveAll()">✓✓ Approve All</button>
+              <button class="btn btn-primary full-width" onclick="goToStep(4)">→ Go to Schedule</button>
+            </div>
+            <div class="draft-cards" id="draft-cards-list"></div>
+          </div>
+
+          <!-- Right: draft editor -->
+          <div class="draft-editor">
+            <div class="draft-editor-header">
+              <span class="card-title">Draft Preview &amp; Edit</span>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <button class="btn btn-ghost" onclick="navigateDraft(-1)">← Prev</button>
+                <span style="font-size:12px;color:var(--gray-400);" id="draft-nav-label">1 of 0</span>
+                <button class="btn btn-ghost" onclick="navigateDraft(1)">Next →</button>
+                <button class="btn btn-teal" onclick="sendTestEmail()">Send Test Email</button>
+              </div>
+            </div>
+
+            <div class="draft-editor-body" id="draft-editor-empty" style="display:flex;align-items:center;justify-content:center;color:var(--gray-400);">
+              <div style="text-align:center;">
+                <div style="font-size:32px;margin-bottom:12px;">📝</div>
+                <div>Select a draft from the left panel to edit</div>
+              </div>
+            </div>
+
+            <div class="draft-editor-body hidden" id="draft-editor-content">
+              <div class="editor-meta" id="editor-meta-row"></div>
+
+              <div class="editor-field-label">Subject</div>
+              <input type="text" class="editor-subject-input" id="editor-subject" onblur="saveDraftField('subject')">
+
+              <div class="editor-field-label">Body</div>
+              <textarea class="editor-body-input" id="editor-body" onblur="saveDraftField('body')"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Schedule & Send -->
+      <div id="wizard-step-4" class="page-content hidden">
+        <div class="stats-row cols-3 mb-16">
+          <div class="stat-card teal"><div class="stat-label">Approved Drafts</div><div class="stat-value" id="s4-approved">0</div></div>
+          <div class="stat-card amber"><div class="stat-label">Queued Jobs</div><div class="stat-value" id="s4-queued">0</div></div>
+          <div class="stat-card"><div class="stat-label">Campaign Status</div><div class="stat-value" id="s4-status">—</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Schedule &amp; Send</span>
+            <button class="btn btn-ghost" onclick="goToStep(3)">← Back</button>
+          </div>
+          <div class="card-body">
+            <!-- Section 1: Account -->
+            <div class="section-title">Sending Account</div>
+            <div class="two-col mb-16">
+              <div class="form-group">
+                <label class="form-label">Sending Account</label>
+                <select class="form-select"><option>Gmail (OAuth)</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Send Mode</label>
+                <select class="form-select" id="send-mode">
+                  <option value="now">Send now</option>
+                  <option value="scheduled">Scheduled</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-title">Send Schedule</div>
+            <div class="two-col mb-16">
+              <div class="form-group">
+                <label class="form-label">Allowed Send Days</label>
+                <div class="day-chips">
+                  <div class="day-chip selected" data-day="Mon">Mon</div>
+                  <div class="day-chip selected" data-day="Tue">Tue</div>
+                  <div class="day-chip selected" data-day="Wed">Wed</div>
+                  <div class="day-chip selected" data-day="Thu">Thu</div>
+                  <div class="day-chip selected" data-day="Fri">Fri</div>
+                  <div class="day-chip" data-day="Sat">Sat</div>
+                  <div class="day-chip" data-day="Sun">Sun</div>
+                </div>
+              </div>
+              <div class="two-col">
+                <div class="form-group">
+                  <label class="form-label">Window Start</label>
+                  <input type="time" class="form-input" id="window-start" value="09:30">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Window End</label>
+                  <input type="time" class="form-input" id="window-end" value="17:00">
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-title">Send Behavior</div>
+            <div class="four-col mb-16">
+              <div class="form-group">
+                <label class="form-label">Daily Cap</label>
+                <input type="number" class="form-input" id="daily-cap" value="20" min="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hourly Cap</label>
+                <input type="number" class="form-input" id="hourly-cap" value="15" min="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Interval Min (min)</label>
+                <input type="number" class="form-input" id="interval-min" value="1" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Interval Max (min)</label>
+                <input type="number" class="form-input" id="interval-max" value="15" min="1">
+              </div>
+            </div>
+            <div class="info-note mb-16">
+              Random interval makes each email send at a slightly different time, so the pattern looks more human.
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-title">Launch Summary</div>
+            <div id="send-summary-card" style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:16px;margin-bottom:16px;">
+              <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--gray-700);">
+                <div>📧 <span id="summary-approved">0</span> approved drafts ready</div>
+                <div>📅 Send days: <span id="summary-days">Mon–Fri</span></div>
+                <div>⏰ Window: <span id="summary-window">09:30 – 17:00</span></div>
+                <div>🔢 Daily cap: <span id="summary-cap">20</span> emails</div>
+              </div>
+            </div>
+
+            <div id="send-warning" class="warning-note mb-16 hidden">
+              ⚠ No approved drafts — go back to Step 3 to approve drafts before sending.
+            </div>
+
+            <button class="btn btn-primary btn-xl full-width" id="btn-send-now" onclick="sendCampaign()" style="height:52px;">
+              ✈ Send Now
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: TEMPLATES ─────────────────────────────────────────────────── -->
+    <div id="page-templates" class="page-section hidden">
+      <div class="page-header">
+        <div class="page-title">Templates</div>
+        <button class="btn btn-primary" onclick="newTemplate()">+ New Template</button>
+      </div>
+
+      <div class="page-content" style="padding:0;">
+        <div class="template-split">
+          <!-- Left: template list -->
+          <div class="template-list">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--gray-100);font-size:12px;font-weight:700;color:var(--gray-400);">MY TEMPLATES</div>
+            <div id="template-list-items"></div>
+
+            <div style="padding:12px 16px;border-top:1px solid var(--gray-100);font-size:12px;font-weight:700;color:var(--gray-400);">SUGGESTED STARTERS</div>
+            <div id="starter-templates">
+              <div class="template-card" onclick="loadStarterTemplate('cold')">
+                <div class="template-card-name">Cold Outreach (Basic)</div>
+                <div class="template-card-preview">Interest in {{ Company }}</div>
+              </div>
+              <div class="template-card" onclick="loadStarterTemplate('coffee')">
+                <div class="template-card-name">Coffee Chat Request</div>
+                <div class="template-card-preview">Quick Chat — {{ Company }}</div>
+              </div>
+              <div class="template-card" onclick="loadStarterTemplate('followup')">
+                <div class="template-card-name">Follow-Up Email</div>
+                <div class="template-card-preview">Following up — {{ Company }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: template editor -->
+          <div class="template-editor">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+              <input type="text" class="editor-subject-input" id="template-name-input" placeholder="Template Name" style="font-size:18px;font-weight:700;">
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-ghost" onclick="resetTemplate()">Reset</button>
+                <button class="btn btn-primary" onclick="saveTemplate()">Save Template</button>
+              </div>
+            </div>
+
+            <!-- Subject -->
+            <div class="editor-field-label">Subject Template</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <button class="merge-tag-btn" onclick="insertMergeTag('template-subject-input','{{ First Name }}')">+ First Name</button>
+              <button class="merge-tag-btn" onclick="insertMergeTag('template-subject-input','{{ Company }}')">+ Company</button>
+              <button class="merge-tag-btn" onclick="insertMergeTag('template-subject-input','{{ Title }}')">+ Title</button>
+            </div>
+            <textarea class="form-textarea" id="template-subject-input" rows="2" placeholder="Interest in {{ Company }}"></textarea>
+
+            <!-- Body -->
+            <div class="editor-field-label" style="margin-top:16px;">Body Template</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+              <button class="merge-tag-btn" onclick="insertMergeTag('template-body-input','{{ First Name }}')">+ First Name</button>
+              <button class="merge-tag-btn" onclick="insertMergeTag('template-body-input','{{ Company }}')">+ Company</button>
+              <button class="merge-tag-btn" onclick="insertMergeTag('template-body-input','{{ Title }}')">+ Title</button>
+              <button class="merge-tag-btn" onclick="insertMergeTag('template-body-input','{{ School }}')">+ School</button>
+            </div>
+            <textarea class="form-textarea" id="template-body-input" rows="12" placeholder="Hi {{ First Name }},&#10;&#10;I hope this message finds you well..."></textarea>
+
+            <div class="info-note" style="margin-top:12px;">
+              Use <code>{{ First Name }}</code>, <code>{{ Company }}</code>, <code>{{ Title }}</code> as merge tags. These are replaced per contact when drafts are generated.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: BILLING ──────────────────────────────────────────────────── -->
+    <div id="page-billing" class="page-section hidden">
+      <div class="page-header">
+        <div class="page-title">Billing</div>
+      </div>
+      <div class="page-content">
+        <!-- Current plan -->
+        <div class="card mb-24" style="margin-bottom:24px;">
+          <div class="card-header">
+            <span class="card-title">🔓 Free Plan</span>
+            <button class="btn btn-primary">Upgrade →</button>
+          </div>
+          <div class="card-body">
+            <div style="margin-bottom:16px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+                <span>Contacts generated this month</span>
+                <span class="font-mono">0 / 200</span>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:0%"></div></div>
+            </div>
+            <div style="display:flex;gap:32px;font-size:13px;color:var(--gray-500);">
+              <span>Campaigns: <strong id="billing-campaigns">0</strong> / 25</span>
+              <span>Emails sent: <strong id="billing-sent">0</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan cards -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+          <div class="billing-card current">
+            <div class="pricing-plan-name">Free</div>
+            <div style="font-size:32px;font-weight:800;margin-bottom:4px;">$0<span style="font-size:14px;font-weight:400;color:var(--gray-500);">/mo</span></div>
+            <ul style="list-style:none;margin:16px 0;font-size:13px;">
+              <li style="padding:4px 0;color:var(--green);">✓ 200 contacts/month</li>
+              <li style="padding:4px 0;color:var(--green);">✓ 25 campaigns</li>
+              <li style="padding:4px 0;color:var(--green);">✓ Gmail OAuth</li>
+            </ul>
+            <button class="btn btn-ghost full-width" disabled>Current Plan</button>
+          </div>
+          <div class="billing-card popular">
+            <div class="billing-badge">MOST POPULAR</div>
+            <div class="pricing-plan-name">Pro</div>
+            <div style="font-size:32px;font-weight:800;margin-bottom:4px;">$29<span style="font-size:14px;font-weight:400;color:var(--gray-500);">/mo</span></div>
+            <ul style="list-style:none;margin:16px 0;font-size:13px;">
+              <li style="padding:4px 0;color:var(--green);">✓ 500 contacts/month</li>
+              <li style="padding:4px 0;color:var(--green);">✓ Unlimited campaigns</li>
+              <li style="padding:4px 0;color:var(--green);">✓ Priority support</li>
+            </ul>
+            <button class="btn btn-primary full-width">Upgrade to Pro</button>
+          </div>
+          <div class="billing-card">
+            <div class="pricing-plan-name">Teams</div>
+            <div style="font-size:32px;font-weight:800;margin-bottom:4px;">Custom</div>
+            <ul style="list-style:none;margin:16px 0;font-size:13px;">
+              <li style="padding:4px 0;color:var(--green);">✓ Unlimited contacts</li>
+              <li style="padding:4px 0;color:var(--green);">✓ Team workspaces</li>
+              <li style="padding:4px 0;color:var(--green);">✓ Dedicated support</li>
+            </ul>
+            <button class="btn btn-outline full-width">Contact Us</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: ACCOUNT ──────────────────────────────────────────────────── -->
+    <div id="page-account" class="page-section hidden">
+      <div class="page-header">
+        <div class="page-title">Account</div>
+      </div>
+      <div class="page-content" style="max-width:640px;">
+        <!-- Profile card -->
+        <div class="card mb-16" style="margin-bottom:16px;">
+          <div class="card-header"><span class="card-title">Profile &amp; Login</span></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" id="account-email" disabled>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn btn-ghost">Change Email</button>
+              <button class="btn btn-ghost" onclick="checkApiHealth()">
+                <span id="api-health-dot" style="width:8px;height:8px;border-radius:50%;background:var(--gray-400);display:inline-block;"></span>
+                API Health
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gmail card -->
+        <div class="card mb-16" style="margin-bottom:16px;">
+          <div class="card-header"><span class="card-title">Gmail Integration</span></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+              <span id="gmail-status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;"></span>
+              <div>
+                <div style="font-size:14px;font-weight:600;" id="gmail-status-text">Not connected</div>
+                <div style="font-size:12px;color:var(--gray-400);" id="gmail-connected-at"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="connectGmail()">Connect Gmail</button>
+              <button class="btn btn-ghost" onclick="loadAccountInfo()">Refresh Status</button>
+              <button class="btn btn-danger" onclick="disconnectGmail()">Disconnect</button>
+            </div>
+            <div class="info-note" style="margin-top:16px;">
+              Uses Gmail OAuth 'gmail.send' scope only. We cannot read your emails.
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="card" style="border:1px solid var(--red);">
+          <div class="card-header"><span class="card-title text-red">Danger Zone</span></div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px;">These actions are permanent and cannot be undone.</p>
+            <button class="btn btn-danger" onclick="confirmDeleteAll()">Delete All Campaigns</button>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;">
+          <button class="btn btn-ghost" onclick="logout()">← Log Out</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Loading overlay -->
+<div id="loading-overlay" class="loading-overlay hidden">
+  <div class="loading-card">
+    <div class="loading-spinner-lg"></div>
+    <div id="loading-text" style="font-size:14px;font-weight:600;color:var(--gray-700);">Loading...</div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
