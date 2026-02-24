@@ -7,9 +7,10 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from ..config import settings
 from ..database import SessionLocal
 from ..models.entities import Campaign, Contact
-from ..services.contact_generation import generate_contacts
+from ..services.contact_generation import JobContextLike, generate_contacts
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/contacts", tags=["contacts"])
@@ -101,15 +102,37 @@ def generate(payload: GenerateContactsPayload, request: Request):
             )
             previously_sent = {d.contact.email for d in sent_drafts if d.contact and d.contact.email}
 
-        # Call generation service
-        raw_contacts = generate_contacts(
-            company_list=payload.company_list,
-            title_keywords=payload.title_keywords,
-            location_list=payload.location_list,
-            target_schools=payload.target_schools,
-            seniority_levels=payload.seniority_levels,
-            target_count=payload.target_count,
+        # Build structured inputs for the search engine
+        companies = [c.strip() for c in payload.company_list.split(",") if c.strip()]
+        cities = [c.strip() for c in payload.location_list.split(",") if c.strip()]
+        schools = [s.strip() for s in payload.target_schools.split(",") if s.strip()]
+        levels = [l.strip() for l in payload.seniority_levels.split(",") if l.strip()] or ["Analyst", "Associate"]
+        keywords = [k.strip() for k in payload.title_keywords.split(",") if k.strip()]
+
+        n_companies = max(1, len(companies))
+        max_per_company = max(3, payload.target_count // n_companies)
+
+        filters = {
+            "companies": companies,
+            "selected_cities": cities,
+            "selected_schools": schools,
+            "seniority_levels": levels,
+            "custom_keywords": keywords,
+            "front_office_keywords": [],
+            "hr_keywords": [],
+            "max_per_company": max_per_company,
+        }
+
+        job_context = JobContextLike(
+            job_name=payload.name,
+            company=companies[0] if companies else "",
+            city=cities[0] if cities else "New York",
+            extracted_keywords=keywords,
         )
+
+        # Run the search
+        result = generate_contacts(filters, job_context, settings.serpapi_key)
+        raw_contacts = result.rows
 
         # Filter duplicates
         if payload.avoid_duplicates:
@@ -118,17 +141,18 @@ def generate(payload: GenerateContactsPayload, request: Request):
         # Save to DB
         saved: list[Contact] = []
         for c in raw_contacts:
+            raw_data = c.get("raw_data") or {}
             ct = Contact(
                 campaign_id=campaign.id,
                 first_name=c.get("first_name"),
                 last_name=c.get("last_name"),
                 title=c.get("title"),
                 company=c.get("company"),
-                location=c.get("location"),
+                location=c.get("city"),      # old app uses "city", DB model uses "location"
                 school=c.get("school"),
                 linkedin_url=c.get("linkedin_url"),
                 email=c.get("email"),
-                fit_score=c.get("fit_score", 0.0),
+                fit_score=float(raw_data.get("fit_score") or 0),
             )
             db.add(ct)
             saved.append(ct)
