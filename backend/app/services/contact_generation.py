@@ -971,8 +971,6 @@ def generate_contacts(filters: dict[str, Any], job_context: JobContextLike, serp
                             snippet=snippet,
                             precision_mode="search",
                         )
-                        if not is_current:
-                            continue
 
                         seniority_ok, seniority_reason = seniority_match_for_mode(
                             detected_level=detected_level,
@@ -980,7 +978,9 @@ def generate_contacts(filters: dict[str, Any], job_context: JobContextLike, serp
                             title_text=role_company_text,
                             precision_mode="search",
                         )
-                        if not seniority_ok:
+
+                        # Skip only if no parseable name — save all other results
+                        if not first:
                             continue
 
                         title_plus_context = " ".join([str(role_company_text or ""), str(snippet or "")]).strip()
@@ -1018,7 +1018,7 @@ def generate_contacts(filters: dict[str, Any], job_context: JobContextLike, serp
                             custom_keyword_score=0,
                             school_target=matched_school,
                             email=email,
-                            current_company_confirmed=True,
+                            current_company_confirmed=is_current,
                         )
 
                         unique_key = (
@@ -1030,7 +1030,8 @@ def generate_contacts(filters: dict[str, Any], job_context: JobContextLike, serp
                             continue
                         seen_people.add(unique_key)
 
-                        display_company = format_display_company(parsed_current_company, raw_company.strip(), base_company)
+                        # Prefer raw_company (what user typed) to avoid truncated snippet names
+                        display_company = format_display_company(raw_company.strip(), parsed_current_company, base_company)
                         company_candidates.append(
                             {
                                 "full_name": full_name,

@@ -830,7 +830,19 @@ function removeResume() {
 function updateTemplateSection() {
   const source = document.getElementById('template-source-select')?.value;
   const group = document.getElementById('template-select-group');
+  const customEditor = document.getElementById('custom-template-editor');
   if (group) group.style.display = source === 'custom' ? 'none' : '';
+  if (customEditor) customEditor.style.display = source === 'custom' ? '' : 'none';
+}
+
+function insertCustomVar(tag) {
+  const ta = document.getElementById('custom-body');
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  ta.value = ta.value.substring(0, start) + tag + ta.value.substring(end);
+  ta.selectionStart = ta.selectionEnd = start + tag.length;
+  ta.focus();
 }
 
 async function loadTemplatesForStep2() {
@@ -867,13 +879,15 @@ async function generateDrafts() {
 
   const templateId = document.getElementById('template-select')?.value || null;
   const source = document.getElementById('template-source-select')?.value;
+  const isCustom = source === 'custom';
 
   showLoading('Generating drafts...');
   try {
     const payload = {
-      template_id: templateId || null,
-      use_template: source !== 'custom',
+      template_id: isCustom ? null : (templateId || null),
       resume_path: State.resumePath,
+      custom_subject: isCustom ? (document.getElementById('custom-subject')?.value.trim() || null) : null,
+      custom_body: isCustom ? (document.getElementById('custom-body')?.value.trim() || null) : null,
     };
     const result = await api('POST', `/api/campaigns/${State.currentCampaign.id}/drafts/generate`, payload);
     if (!result) return;
@@ -1080,11 +1094,9 @@ function updateDraftStats() {
 async function sendTestEmail() {
   const d = State.drafts[State.currentDraftIdx];
   if (!d?.id) { toast('No draft selected', 'error'); return; }
-  const email = prompt('Send test to:', State.currentUser?.email || '');
-  if (!email) return;
   try {
-    await api('POST', `/api/drafts/${d.id}/test`, { to: email });
-    toast('Test email sent to ' + email, 'success');
+    await api('POST', `/api/drafts/${d.id}/test`);
+    toast('Test email sent to ' + (State.currentUser?.email || 'your inbox'), 'success');
   } catch (e) {
     toast(e.message, 'error');
   }

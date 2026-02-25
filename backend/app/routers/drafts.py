@@ -57,6 +57,8 @@ class DraftPatch(BaseModel):
 class DraftsGeneratePayload(BaseModel):
     template_id: int | None = None
     resume_path: str | None = None
+    custom_subject: str | None = None
+    custom_body: str | None = None
 
 
 @router.get("/api/campaigns/{campaign_id}/drafts")
@@ -94,7 +96,11 @@ def generate_drafts(campaign_id: int, payload: DraftsGeneratePayload, request: R
         body_tpl = DEFAULT_BODY
         resume_path = payload.resume_path
 
-        if payload.template_id:
+        if payload.custom_subject or payload.custom_body:
+            # User wrote a custom email directly in the wizard
+            subject_tpl = payload.custom_subject or DEFAULT_SUBJECT
+            body_tpl = payload.custom_body or DEFAULT_BODY
+        elif payload.template_id:
             tmpl = db.query(Template).filter(Template.id == payload.template_id).first()
             if tmpl:
                 subject_tpl = tmpl.subject_template or DEFAULT_SUBJECT

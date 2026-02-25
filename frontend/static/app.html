@@ -450,6 +450,36 @@
                     <option value="">Loading templates...</option>
                   </select>
                 </div>
+
+                <!-- Custom template editor — shown when "Custom" is selected -->
+                <div id="custom-template-editor" style="display:none;">
+                  <div class="form-group">
+                    <label class="form-label">Subject Line</label>
+                    <input type="text" class="input" id="custom-subject"
+                      placeholder="e.g. Quick chat — {{ Company }}?">
+                  </div>
+                  <div class="form-group" style="margin-top:12px;">
+                    <label class="form-label">Email Body</label>
+                    <div style="font-size:11px;color:var(--gray-400);margin-bottom:6px;">
+                      Insert variables:
+                      <code style="background:var(--gray-100);padding:1px 4px;border-radius:3px;">{{ First Name }}</code>
+                      <code style="background:var(--gray-100);padding:1px 4px;border-radius:3px;">{{ Company }}</code>
+                      <code style="background:var(--gray-100);padding:1px 4px;border-radius:3px;">{{ Title }}</code>
+                    </div>
+                    <textarea id="custom-body" class="input"
+                      style="height:180px;resize:vertical;font-family:'DM Mono',monospace;font-size:12px;line-height:1.5;"
+                      placeholder="Hi {{ First Name }},&#10;&#10;I came across your profile and was really impressed by your work as a {{ Title }} at {{ Company }}. I'm a finance student and would love to connect for a quick 15-minute chat..."></textarea>
+                  </div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;">
+                    <span style="font-size:11px;color:var(--gray-500);">Insert:</span>
+                    <button class="btn btn-ghost" style="height:24px;font-size:11px;padding:0 8px;" onclick="insertCustomVar('{{ First Name }}')">First Name</button>
+                    <button class="btn btn-ghost" style="height:24px;font-size:11px;padding:0 8px;" onclick="insertCustomVar('{{ Company }}')">Company</button>
+                    <button class="btn btn-ghost" style="height:24px;font-size:11px;padding:0 8px;" onclick="insertCustomVar('{{ Title }}')">Title</button>
+                    <button class="btn btn-ghost" style="height:24px;font-size:11px;padding:0 8px;" onclick="insertCustomVar('{{ School }}')">School</button>
+                    <button class="btn btn-ghost" style="height:24px;font-size:11px;padding:0 8px;" onclick="insertCustomVar('{{ Location }}')">Location</button>
+                  </div>
+                </div>
+
               </div>
             </div>
 

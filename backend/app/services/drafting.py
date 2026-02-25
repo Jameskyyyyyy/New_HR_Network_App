@@ -19,12 +19,20 @@ def render_template(template: str, contact: dict[str, Any]) -> str:
     for tag, field in MERGE_TAG_MAP.items():
         value = contact.get(field) or ""
         result = result.replace(tag, value)
-    # Also handle lowercase/flexible tags
+    # Double-brace flexible spacing: {{ company }}, {{ First Name }}, etc.
     result = re.sub(r"\{\{\s*first\s*name\s*\}\}", contact.get("first_name") or "", result, flags=re.I)
     result = re.sub(r"\{\{\s*last\s*name\s*\}\}", contact.get("last_name") or "", result, flags=re.I)
     result = re.sub(r"\{\{\s*company\s*\}\}", contact.get("company") or "", result, flags=re.I)
     result = re.sub(r"\{\{\s*title\s*\}\}", contact.get("title") or "", result, flags=re.I)
     result = re.sub(r"\{\{\s*school\s*\}\}", contact.get("school") or "", result, flags=re.I)
+    result = re.sub(r"\{\{\s*location\s*\}\}", contact.get("location") or "", result, flags=re.I)
+    # Single-brace format: {company}, {first_name}, {First Name}, etc.
+    result = re.sub(r"\{first[_\s]name\}", contact.get("first_name") or "", result, flags=re.I)
+    result = re.sub(r"\{last[_\s]name\}", contact.get("last_name") or "", result, flags=re.I)
+    result = re.sub(r"\{company\}", contact.get("company") or "", result, flags=re.I)
+    result = re.sub(r"\{title\}", contact.get("title") or "", result, flags=re.I)
+    result = re.sub(r"\{school\}", contact.get("school") or "", result, flags=re.I)
+    result = re.sub(r"\{location\}", contact.get("location") or "", result, flags=re.I)
     return result
 
 
