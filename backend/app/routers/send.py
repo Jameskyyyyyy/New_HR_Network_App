@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from ..database import SessionLocal
-from ..models.entities import Campaign, Draft, DraftStatus, SendJob, SendJobStatus
+from ..models.entities import Campaign, CampaignStatus, Draft, DraftStatus, SendJob, SendJobStatus
 from ..services.scheduling import calculate_send_times
 
 logger = logging.getLogger(__name__)
@@ -74,7 +74,7 @@ def queue_send(payload: SendPayload, request: Request):
             db.add(job)
             jobs_created += 1
 
-        campaign.status = "sending"
+        campaign.status = CampaignStatus.sending
         db.commit()
 
         return {"queued": jobs_created, "campaign_id": payload.campaign_id}

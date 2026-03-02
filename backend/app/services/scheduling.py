@@ -35,7 +35,7 @@ def calculate_send_times(
     start_h, start_m = _parse_time(window_start)
     end_h, end_m = _parse_time(window_end)
 
-    now = start_from or datetime.now()
+    now = start_from or datetime.utcnow()
     scheduled: list[datetime] = []
     current = now.replace(second=0, microsecond=0)
 
