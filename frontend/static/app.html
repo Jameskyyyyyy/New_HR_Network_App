@@ -488,16 +488,27 @@
                 </div>
 
                 <!-- Custom template editor — shown when "Custom" is selected -->
-                <div id="custom-template-editor" style="display:none;">
-                  <div class="form-group">
-                    <label class="form-label">Subject Line</label>
-                    <input type="text" class="input" id="custom-subject"
-                      placeholder="e.g. Quick chat — {{ Company }}?">
-                  </div>
-                  <div class="form-group" style="margin-top:12px;">
-                    <label class="form-label">Email Body</label>
-                    <!-- Rich text toolbar -->
-                    <div class="rich-toolbar">
+                <div id="custom-template-editor" style="display:none;margin-top:4px;">
+                  <!-- Gmail-style composer with amber border -->
+                  <div class="custom-email-composer">
+
+                    <!-- Subject row -->
+                    <div class="composer-subject-row">
+                      <span class="composer-field-label">Subject</span>
+                      <input type="text" id="custom-subject" class="composer-subject-input"
+                        placeholder="e.g. Quick chat — {{ Company }}?">
+                    </div>
+
+                    <!-- Subject merge tags -->
+                    <div class="composer-tag-row">
+                      <span class="composer-tag-label">Insert:</span>
+                      <button class="merge-tag-btn" onmousedown="event.preventDefault();insertSubjectVar('{{ First Name }}')">+ First Name</button>
+                      <button class="merge-tag-btn" onmousedown="event.preventDefault();insertSubjectVar('{{ Company }}')">+ Company</button>
+                      <button class="merge-tag-btn" onmousedown="event.preventDefault();insertSubjectVar('{{ Title }}')">+ Title</button>
+                    </div>
+
+                    <!-- Body toolbar (no {} button) -->
+                    <div class="rich-toolbar composer-toolbar">
                       <button class="tb-btn" title="Bold" onmousedown="event.preventDefault();execRichCmd('bold')"><b>B</b></button>
                       <button class="tb-btn" title="Italic" onmousedown="event.preventDefault();execRichCmd('italic')"><i>I</i></button>
                       <button class="tb-btn" title="Underline" onmousedown="event.preventDefault();execRichCmd('underline')"><u>U</u></button>
@@ -523,23 +534,21 @@
                         <option value="Trebuchet MS">Trebuchet MS</option>
                         <option value="Verdana">Verdana</option>
                       </select>
-                      <div class="tb-sep"></div>
-                      <div style="position:relative;">
-                        <button class="tb-btn" title="Insert Variable" onmousedown="event.preventDefault();toggleVarMenu()" style="font-family:monospace;font-weight:700;font-size:12px;">{&thinsp;}</button>
-                        <div id="var-insert-menu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:white;border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.12);z-index:200;min-width:170px;padding:4px 0;">
-                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ First Name }}')">{{ First Name }}</div>
-                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Last Name }}')">{{ Last Name }}</div>
-                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Company }}')">{{ Company }}</div>
-                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Title }}')">{{ Title }}</div>
-                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ School }}')">{{ School }}</div>
-                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Location }}')">{{ Location }}</div>
-                        </div>
-                      </div>
                     </div>
-                    <!-- Contenteditable rich body -->
-                    <div contenteditable="true" id="custom-body" class="rich-editor-body"
+
+                    <!-- Body merge tags -->
+                    <div class="composer-tag-row">
+                      <span class="composer-tag-label">Insert:</span>
+                      <button class="merge-tag-btn" onmousedown="event.preventDefault();insertVariable('{{ First Name }}')">+ First Name</button>
+                      <button class="merge-tag-btn" onmousedown="event.preventDefault();insertVariable('{{ Last Name }}')">+ Last Name</button>
+                      <button class="merge-tag-btn" onmousedown="event.preventDefault();insertVariable('{{ Company }}')">+ Company</button>
+                      <button class="merge-tag-btn" onmousedown="event.preventDefault();insertVariable('{{ Title }}')">+ Title</button>
+                    </div>
+
+                    <!-- Contenteditable body -->
+                    <div contenteditable="true" id="custom-body" class="rich-editor-body composer-body"
                       data-placeholder="Hi {{ First Name }},&#10;&#10;I came across your profile and was really impressed by your work as a {{ Title }} at {{ Company }}. I'm a finance student and would love to connect for a quick 15-minute chat..."
-                      style="min-height:200px;font-family:Arial,sans-serif;"></div>
+                      style="font-family:Arial,sans-serif;min-height:260px;"></div>
                   </div>
                 </div>
 

@@ -822,6 +822,81 @@ td {
   box-shadow: 0 0 0 3px rgba(251,139,30,0.1);
 }
 
+/* ── Custom email composer (Step 2) ──────────────────────────────────────── */
+.custom-email-composer {
+  border: 2px solid var(--amber);
+  border-radius: 10px;
+  overflow: hidden;
+  background: white;
+}
+
+.composer-subject-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--gray-200);
+  gap: 12px;
+}
+
+.composer-field-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  min-width: 52px;
+  flex-shrink: 0;
+}
+
+.composer-subject-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--gray-900);
+  background: transparent;
+}
+.composer-subject-input::placeholder { color: var(--gray-300); }
+
+.composer-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--gray-100);
+  background: var(--gray-50);
+  flex-wrap: wrap;
+}
+
+.composer-tag-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 2px;
+}
+
+/* Flatten the toolbar when inside the composer */
+.custom-email-composer .composer-toolbar {
+  border: none;
+  border-bottom: 1px solid var(--gray-200);
+  border-radius: 0;
+  background: white;
+}
+
+/* Flatten the rich editor body when inside the composer */
+.custom-email-composer .composer-body {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.custom-email-composer .composer-body:focus {
+  border: none !important;
+  box-shadow: none !important;
+}
+
 /* ── Rich text editor ────────────────────────────────────────────────────── */
 .rich-toolbar {
   display: flex;

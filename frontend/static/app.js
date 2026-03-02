@@ -858,6 +858,17 @@ function insertCustomVar(tag) {
   document.execCommand('insertText', false, tag);
 }
 
+// Insert a merge tag into the subject line input at cursor position
+function insertSubjectVar(tag) {
+  const input = document.getElementById('custom-subject');
+  if (!input) return;
+  const start = input.selectionStart ?? input.value.length;
+  const end   = input.selectionEnd   ?? input.value.length;
+  input.value = input.value.substring(0, start) + tag + input.value.substring(end);
+  input.selectionStart = input.selectionEnd = start + tag.length;
+  input.focus();
+}
+
 async function loadTemplatesForStep2() {
   try {
     const data = await api('GET', '/api/templates');
