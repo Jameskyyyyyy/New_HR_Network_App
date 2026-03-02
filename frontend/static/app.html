@@ -519,13 +519,10 @@
               Draft List <span class="nav-badge" id="draft-list-count">0</span>
             </div>
             <div class="draft-list-actions">
-              <button class="btn btn-ghost full-width" onclick="goToStep(2)">← Back to Draft Settings</button>
               <button class="btn btn-teal full-width" onclick="approveSelected()">✓ Approve Selected</button>
+              <button class="btn btn-ghost full-width" onclick="unapproveSelected()" style="color:#e53e3e;border-color:#fed7d7;">↩ Un-approve Selected</button>
               <button class="btn btn-black full-width" onclick="approveAll()">✓✓ Approve All</button>
               <button class="btn btn-ghost full-width" onclick="unapproveAll()" style="color:#e53e3e;border-color:#fed7d7;">↩ Un-approve All</button>
-              <div style="font-size:11px;color:var(--gray-400);text-align:center;margin-top:6px;line-height:1.4;">
-                Approve drafts first, then use<br>Go to Schedule (bottom-right).
-              </div>
             </div>
             <div class="draft-cards" id="draft-cards-list"></div>
           </div>
@@ -549,19 +546,66 @@
               </div>
             </div>
 
-            <div class="draft-editor-body hidden" id="draft-editor-content">
+            <div class="draft-editor-body hidden" id="draft-editor-content" style="display:flex;flex-direction:column;overflow:hidden;padding:16px 20px;">
               <div class="editor-meta" id="editor-meta-row"></div>
 
-              <div class="editor-field-label">Subject</div>
-              <input type="text" class="editor-subject-input" id="editor-subject" onblur="saveDraftField('subject')">
+              <!-- Subject -->
+              <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray-400);margin-bottom:4px;">Subject</div>
+              <input type="text" class="editor-subject-input" id="editor-subject" placeholder="Enter your email subject" onblur="saveDraftField('subject')">
 
-              <div class="editor-field-label">Body</div>
-              <textarea class="editor-body-input" id="editor-body" onblur="saveDraftField('body')"></textarea>
+              <!-- Body label -->
+              <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray-400);margin:14px 0 0;">Body</div>
+
+              <!-- Rich text toolbar -->
+              <div class="rich-toolbar" id="rich-toolbar">
+                <button class="tb-btn" title="Bold" onmousedown="event.preventDefault();execRichCmd('bold')"><b>B</b></button>
+                <button class="tb-btn" title="Italic" onmousedown="event.preventDefault();execRichCmd('italic')"><i>I</i></button>
+                <button class="tb-btn" title="Underline" onmousedown="event.preventDefault();execRichCmd('underline')"><u>U</u></button>
+                <div class="tb-sep"></div>
+                <label class="tb-btn" title="Text Color" style="cursor:pointer;position:relative;display:flex;align-items:center;gap:2px;">
+                  <span id="color-indicator" style="font-weight:700;border-bottom:3px solid #111;padding-bottom:1px;">A</span>
+                  <span style="font-size:9px;">▼</span>
+                  <input type="color" id="text-color-picker" value="#111111" style="position:absolute;width:100%;height:100%;top:0;left:0;opacity:0;cursor:pointer;" onchange="applyEditorColor(this.value)">
+                </label>
+                <div class="tb-sep"></div>
+                <select class="tb-select" id="font-family-select" onchange="applyEditorFont(this.value)" style="width:130px;">
+                  <option value="Arial" style="font-family:Arial">Arial</option>
+                  <option value="Times New Roman" style="font-family:'Times New Roman'">Times New Roman</option>
+                  <option value="Calibri" style="font-family:Calibri">Calibri</option>
+                  <option disabled>──────────</option>
+                  <option value="sans-serif">Sans Serif</option>
+                  <option value="serif">Serif</option>
+                  <option value="monospace">Fixed Width</option>
+                  <option value="Comic Sans MS" style="font-family:'Comic Sans MS'">Comic Sans MS</option>
+                  <option value="Garamond" style="font-family:Garamond">Garamond</option>
+                  <option value="Georgia" style="font-family:Georgia">Georgia</option>
+                  <option value="Tahoma" style="font-family:Tahoma">Tahoma</option>
+                  <option value="Trebuchet MS" style="font-family:'Trebuchet MS'">Trebuchet MS</option>
+                  <option value="Verdana" style="font-family:Verdana">Verdana</option>
+                </select>
+                <div class="tb-sep"></div>
+                <div style="position:relative;">
+                  <button class="tb-btn" title="Insert Variable" onmousedown="event.preventDefault();toggleVarMenu(event)" style="font-family:monospace;font-weight:700;font-size:12px;">{&thinsp;}</button>
+                  <div id="var-insert-menu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:white;border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.12);z-index:200;min-width:170px;padding:4px 0;">
+                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ First Name }}')">{{ First Name }}</div>
+                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Last Name }}')">{{ Last Name }}</div>
+                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Company }}')">{{ Company }}</div>
+                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Title }}')">{{ Title }}</div>
+                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ School }}')">{{ School }}</div>
+                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Location }}')">{{ Location }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contenteditable rich body -->
+              <div contenteditable="true" id="editor-body" class="rich-editor-body" oninput="scheduleSaveDraft()" onblur="saveDraftField('body')"></div>
             </div>
           </div>
         </div>
-        <!-- Step 3 footer: Go to Schedule lives bottom-right -->
-        <div style="display:flex;justify-content:flex-end;align-items:center;padding:10px 20px;border-top:1px solid var(--gray-200);background:white;flex-shrink:0;">
+
+        <!-- Step 3 footer: Back left, Schedule right -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-top:1px solid var(--gray-200);background:white;flex-shrink:0;">
+          <button class="btn btn-ghost" style="padding:10px 20px;font-size:14px;" onclick="goToStep(2)">← Back to Draft Settings</button>
           <button class="btn btn-primary" style="padding:10px 24px;font-size:14px;" onclick="goToScheduleStep()">→ Go to Schedule</button>
         </div>
       </div>

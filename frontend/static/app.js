@@ -1012,7 +1012,16 @@ function loadDraft(idx) {
   const subjEl = document.getElementById('editor-subject');
   if (subjEl) subjEl.value = d.subject || '';
   const bodyEl = document.getElementById('editor-body');
-  if (bodyEl) bodyEl.value = d.body || '';
+  if (bodyEl) {
+    const body = d.body || '';
+    // If the stored body already contains HTML tags render as HTML,
+    // otherwise convert plain-text newlines to <br> for the rich editor.
+    if (/<[a-z][\s\S]*>/i.test(body)) {
+      bodyEl.innerHTML = body;
+    } else {
+      bodyEl.innerHTML = body.replace(/\n/g, '<br>');
+    }
+  }
 
   // Update active card highlight
   renderDraftCards();
@@ -1028,7 +1037,12 @@ function navigateDraft(delta) {
 async function saveDraftField(field) {
   const d = State.drafts[State.currentDraftIdx];
   if (!d?.id) return;
-  const val = document.getElementById(`editor-${field}`)?.value;
+  let val;
+  if (field === 'body') {
+    val = document.getElementById('editor-body')?.innerHTML ?? '';
+  } else {
+    val = document.getElementById(`editor-${field}`)?.value;
+  }
   if (val === undefined) return;
   try {
     await api('PATCH', `/api/drafts/${d.id}`, { [field]: val });
@@ -1036,6 +1050,60 @@ async function saveDraftField(field) {
   } catch (e) {
     toast('Failed to save: ' + e.message, 'error');
   }
+}
+
+// ── Rich text editor ───────────────────────────────────────────────────────────
+function execRichCmd(cmd, value = null) {
+  const editor = document.getElementById('editor-body');
+  if (editor) editor.focus();
+  document.execCommand('styleWithCSS', false, true);
+  document.execCommand(cmd, false, value);
+}
+
+function applyEditorColor(color) {
+  const indicator = document.getElementById('color-indicator');
+  if (indicator) indicator.style.borderBottomColor = color;
+  execRichCmd('foreColor', color);
+}
+
+function applyEditorFont(family) {
+  if (!family) return;
+  execRichCmd('fontName', family);
+  // Also update the default font on the editor so new text uses it
+  const editor = document.getElementById('editor-body');
+  if (editor) editor.style.fontFamily = family;
+}
+
+let _varMenuOpen = false;
+function toggleVarMenu() {
+  const menu = document.getElementById('var-insert-menu');
+  if (!menu) return;
+  _varMenuOpen = !_varMenuOpen;
+  menu.style.display = _varMenuOpen ? 'block' : 'none';
+}
+
+function insertVariable(text) {
+  const menu = document.getElementById('var-insert-menu');
+  if (menu) menu.style.display = 'none';
+  _varMenuOpen = false;
+  const editor = document.getElementById('editor-body');
+  if (editor) editor.focus();
+  document.execCommand('insertText', false, text);
+}
+
+// Close var menu when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('#var-insert-menu') && !e.target.closest('[title="Insert Variable"]')) {
+    const menu = document.getElementById('var-insert-menu');
+    if (menu) menu.style.display = 'none';
+    _varMenuOpen = false;
+  }
+});
+
+let _saveDraftTimer = null;
+function scheduleSaveDraft() {
+  clearTimeout(_saveDraftTimer);
+  _saveDraftTimer = setTimeout(() => saveDraftField('body'), 1200);
 }
 
 async function approveSingleDraft(idx) {
@@ -1070,6 +1138,22 @@ async function approveAll() {
     toast(e.message, 'error');
   } finally {
     hideLoading();
+  }
+}
+
+async function unapproveSelected() {
+  const current = State.drafts[State.currentDraftIdx];
+  if (!current) { toast('No draft selected', 'default'); return; }
+  if (current.status !== 'approved') { toast('This draft is not approved', 'default'); return; }
+  try {
+    await api('POST', `/api/drafts/${current.id}/approve`, { approved: false });
+    current.status = 'generated';
+    renderDraftCards();
+    updateDraftStats();
+    loadDraft(State.currentDraftIdx);
+    toast('Draft un-approved', 'success');
+  } catch (e) {
+    toast(e.message, 'error');
   }
 }
 
