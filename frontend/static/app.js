@@ -852,13 +852,10 @@ function updateTemplateSection() {
 }
 
 function insertCustomVar(tag) {
-  const ta = document.getElementById('custom-body');
-  if (!ta) return;
-  const start = ta.selectionStart;
-  const end = ta.selectionEnd;
-  ta.value = ta.value.substring(0, start) + tag + ta.value.substring(end);
-  ta.selectionStart = ta.selectionEnd = start + tag.length;
-  ta.focus();
+  const editor = document.getElementById('custom-body');
+  if (!editor) return;
+  editor.focus();
+  document.execCommand('insertText', false, tag);
 }
 
 async function loadTemplatesForStep2() {
@@ -903,7 +900,7 @@ async function generateDrafts() {
       template_id: isCustom ? null : (templateId || null),
       resume_path: State.resumePath,
       custom_subject: isCustom ? (document.getElementById('custom-subject')?.value.trim() || null) : null,
-      custom_body: isCustom ? (document.getElementById('custom-body')?.value.trim() || null) : null,
+      custom_body: isCustom ? (document.getElementById('custom-body')?.innerText.trim() || null) : null,
     };
     const result = await api('POST', `/api/campaigns/${State.currentCampaign.id}/drafts/generate`, payload);
     if (!result) return;
@@ -1014,12 +1011,13 @@ function loadDraft(idx) {
   const bodyEl = document.getElementById('editor-body');
   if (bodyEl) {
     const body = d.body || '';
-    // If the stored body already contains HTML tags render as HTML,
-    // otherwise convert plain-text newlines to <br> for the rich editor.
+    // Strip HTML tags if body was previously stored as rich HTML
     if (/<[a-z][\s\S]*>/i.test(body)) {
-      bodyEl.innerHTML = body;
+      const tmp = document.createElement('div');
+      tmp.innerHTML = body;
+      bodyEl.value = tmp.innerText || tmp.textContent || '';
     } else {
-      bodyEl.innerHTML = body.replace(/\n/g, '<br>');
+      bodyEl.value = body;
     }
   }
 
@@ -1039,7 +1037,7 @@ async function saveDraftField(field) {
   if (!d?.id) return;
   let val;
   if (field === 'body') {
-    val = document.getElementById('editor-body')?.innerHTML ?? '';
+    val = document.getElementById('editor-body')?.value ?? '';
   } else {
     val = document.getElementById(`editor-${field}`)?.value;
   }
@@ -1052,9 +1050,9 @@ async function saveDraftField(field) {
   }
 }
 
-// ── Rich text editor ───────────────────────────────────────────────────────────
+// ── Rich text editor (Step 2 custom-body) ────────────────────────────────────
 function execRichCmd(cmd, value = null) {
-  const editor = document.getElementById('editor-body');
+  const editor = document.getElementById('custom-body');
   if (editor) editor.focus();
   document.execCommand('styleWithCSS', false, true);
   document.execCommand(cmd, false, value);
@@ -1070,7 +1068,7 @@ function applyEditorFont(family) {
   if (!family) return;
   execRichCmd('fontName', family);
   // Also update the default font on the editor so new text uses it
-  const editor = document.getElementById('editor-body');
+  const editor = document.getElementById('custom-body');
   if (editor) editor.style.fontFamily = family;
 }
 
@@ -1086,7 +1084,7 @@ function insertVariable(text) {
   const menu = document.getElementById('var-insert-menu');
   if (menu) menu.style.display = 'none';
   _varMenuOpen = false;
-  const editor = document.getElementById('editor-body');
+  const editor = document.getElementById('custom-body');
   if (editor) editor.focus();
   document.execCommand('insertText', false, text);
 }
@@ -1612,6 +1610,31 @@ async function checkApiHealth() {
   }
 }
 
+// ── User dropdown (topbar) ────────────────────────────────────────────────────
+function updateUserDropdown() {
+  const user = State.currentUser;
+  if (!user) return;
+  const initial = (user.email || user.name || '?')[0].toUpperCase();
+  const avatarEl = document.getElementById('topbar-avatar-initial');
+  if (avatarEl) avatarEl.textContent = initial;
+  const nameEl = document.getElementById('dropdown-name');
+  if (nameEl) nameEl.textContent = user.name || user.email || '—';
+  const emailEl = document.getElementById('dropdown-email');
+  if (emailEl) emailEl.textContent = user.email || '—';
+}
+
+function toggleUserDropdown() {
+  const dropdown = document.getElementById('user-dropdown');
+  if (!dropdown) return;
+  const isOpen = dropdown.style.display !== 'none';
+  dropdown.style.display = isOpen ? 'none' : 'block';
+}
+
+function closeUserDropdown() {
+  const dropdown = document.getElementById('user-dropdown');
+  if (dropdown) dropdown.style.display = 'none';
+}
+
 async function logout() {
   try {
     await api('POST', '/api/auth/logout');
@@ -1724,9 +1747,17 @@ async function init() {
     const user = await api('GET', '/api/auth/me');
     if (!user) return; // api() will redirect to /login on 401
     State.currentUser = user;
+    updateUserDropdown();
   } catch (e) {
     // If API not available, continue anyway for dev purposes
   }
+
+  // Close user dropdown when clicking outside
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.topbar-avatar-wrap')) {
+      closeUserDropdown();
+    }
+  });
 
   // Load dashboard
   showPage('dashboard');

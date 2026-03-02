@@ -139,10 +139,103 @@ body {
   text-align: center;
 }
 
+.sidebar-new-btn {
+  padding: 10px 10px 0;
+}
+
+.btn-new-campaign {
+  width: 100%;
+  padding: 11px 16px;
+  background: var(--amber);
+  color: var(--black);
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s;
+  letter-spacing: 0.01em;
+}
+.btn-new-campaign:hover { background: var(--amber-dark); }
+
 .sidebar-footer {
   padding: 12px 8px;
   border-top: 1px solid #111;
 }
+
+/* ── App top bar ─────────────────────────────────────────────────────────── */
+.app-topbar {
+  height: 48px;
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  flex-shrink: 0;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.topbar-avatar-wrap { position: relative; }
+
+.topbar-avatar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+}
+
+.topbar-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--amber);
+  color: var(--black);
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+}
+.topbar-avatar:hover { opacity: 0.85; }
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+  min-width: 230px;
+  z-index: 300;
+  overflow: hidden;
+}
+
+.user-dropdown-info { padding: 14px 16px; }
+.user-dropdown-name { font-weight: 700; font-size: 14px; color: var(--gray-900); }
+.user-dropdown-email { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+
+.user-dropdown-sep { height: 1px; background: var(--gray-100); margin: 4px 0; }
+
+.user-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--gray-700);
+  font-family: inherit;
+}
+.user-dropdown-item:hover { background: var(--gray-50); color: var(--gray-900); }
 
 /* ── Page header ─────────────────────────────────────────────────────────── */
 .page-header {

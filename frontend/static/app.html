@@ -40,6 +40,11 @@
         <span class="nav-icon">👤</span> Account
       </button>
     </nav>
+    <!-- New Campaign CTA -->
+    <div class="sidebar-new-btn">
+      <button class="btn-new-campaign" onclick="openNewCampaign()">🚀 New Campaign</button>
+    </div>
+
     <div class="sidebar-footer">
       <button class="nav-item" onclick="showPage('help')">
         <span class="nav-icon">❓</span> Help &amp; Docs
@@ -52,6 +57,29 @@
 
   <!-- MAIN CONTENT -->
   <main class="main-content">
+
+    <!-- ── TOP BAR ──────────────────────────────────────────────────────────── -->
+    <div class="app-topbar">
+      <div style="flex:1;"></div>
+      <div class="topbar-right">
+        <div class="topbar-avatar-wrap">
+          <button class="topbar-avatar-btn" onclick="toggleUserDropdown()" title="Account menu">
+            <div class="topbar-avatar" id="topbar-avatar-initial">?</div>
+          </button>
+          <div class="user-dropdown" id="user-dropdown" style="display:none;">
+            <div class="user-dropdown-info">
+              <div class="user-dropdown-name" id="dropdown-name">—</div>
+              <div class="user-dropdown-email" id="dropdown-email">—</div>
+            </div>
+            <div class="user-dropdown-sep"></div>
+            <button class="user-dropdown-item" onclick="showPage('account');closeUserDropdown()">Account</button>
+            <button class="user-dropdown-item" onclick="showPage('billing');closeUserDropdown()">Billing</button>
+            <div class="user-dropdown-sep"></div>
+            <button class="user-dropdown-item" style="color:var(--red);" onclick="logout()">Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ── PAGE: DASHBOARD ─────────────────────────────────────────────────── -->
     <div id="page-dashboard" class="page-section">
@@ -468,23 +496,50 @@
                   </div>
                   <div class="form-group" style="margin-top:12px;">
                     <label class="form-label">Email Body</label>
-                    <div style="font-size:11px;color:var(--gray-400);margin-bottom:6px;">
-                      Insert variables:
-                      <code style="background:var(--gray-100);padding:1px 4px;border-radius:3px;">{{ First Name }}</code>
-                      <code style="background:var(--gray-100);padding:1px 4px;border-radius:3px;">{{ Company }}</code>
-                      <code style="background:var(--gray-100);padding:1px 4px;border-radius:3px;">{{ Title }}</code>
+                    <!-- Rich text toolbar -->
+                    <div class="rich-toolbar">
+                      <button class="tb-btn" title="Bold" onmousedown="event.preventDefault();execRichCmd('bold')"><b>B</b></button>
+                      <button class="tb-btn" title="Italic" onmousedown="event.preventDefault();execRichCmd('italic')"><i>I</i></button>
+                      <button class="tb-btn" title="Underline" onmousedown="event.preventDefault();execRichCmd('underline')"><u>U</u></button>
+                      <div class="tb-sep"></div>
+                      <label class="tb-btn" title="Text Color" style="cursor:pointer;position:relative;display:flex;align-items:center;gap:2px;">
+                        <span id="color-indicator" style="font-weight:700;border-bottom:3px solid #111;padding-bottom:1px;">A</span>
+                        <span style="font-size:9px;">▼</span>
+                        <input type="color" id="text-color-picker" value="#111111" style="position:absolute;width:100%;height:100%;top:0;left:0;opacity:0;cursor:pointer;" onchange="applyEditorColor(this.value)">
+                      </label>
+                      <div class="tb-sep"></div>
+                      <select class="tb-select" id="font-family-select" onchange="applyEditorFont(this.value)" style="width:130px;">
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Calibri">Calibri</option>
+                        <option disabled>──────────</option>
+                        <option value="sans-serif">Sans Serif</option>
+                        <option value="serif">Serif</option>
+                        <option value="monospace">Fixed Width</option>
+                        <option value="Comic Sans MS">Comic Sans MS</option>
+                        <option value="Garamond">Garamond</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Tahoma">Tahoma</option>
+                        <option value="Trebuchet MS">Trebuchet MS</option>
+                        <option value="Verdana">Verdana</option>
+                      </select>
+                      <div class="tb-sep"></div>
+                      <div style="position:relative;">
+                        <button class="tb-btn" title="Insert Variable" onmousedown="event.preventDefault();toggleVarMenu()" style="font-family:monospace;font-weight:700;font-size:12px;">{&thinsp;}</button>
+                        <div id="var-insert-menu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:white;border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.12);z-index:200;min-width:170px;padding:4px 0;">
+                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ First Name }}')">{{ First Name }}</div>
+                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Last Name }}')">{{ Last Name }}</div>
+                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Company }}')">{{ Company }}</div>
+                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Title }}')">{{ Title }}</div>
+                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ School }}')">{{ School }}</div>
+                          <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Location }}')">{{ Location }}</div>
+                        </div>
+                      </div>
                     </div>
-                    <textarea id="custom-body" class="input"
-                      style="height:180px;resize:vertical;font-family:'DM Mono',monospace;font-size:12px;line-height:1.5;"
-                      placeholder="Hi {{ First Name }},&#10;&#10;I came across your profile and was really impressed by your work as a {{ Title }} at {{ Company }}. I'm a finance student and would love to connect for a quick 15-minute chat..."></textarea>
-                  </div>
-                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;">
-                    <span style="font-size:11px;color:var(--gray-500);">Insert:</span>
-                    <button class="btn btn-ghost" style="height:24px;font-size:11px;padding:0 8px;" onclick="insertCustomVar('{{ First Name }}')">First Name</button>
-                    <button class="btn btn-ghost" style="height:24px;font-size:11px;padding:0 8px;" onclick="insertCustomVar('{{ Company }}')">Company</button>
-                    <button class="btn btn-ghost" style="height:24px;font-size:11px;padding:0 8px;" onclick="insertCustomVar('{{ Title }}')">Title</button>
-                    <button class="btn btn-ghost" style="height:24px;font-size:11px;padding:0 8px;" onclick="insertCustomVar('{{ School }}')">School</button>
-                    <button class="btn btn-ghost" style="height:24px;font-size:11px;padding:0 8px;" onclick="insertCustomVar('{{ Location }}')">Location</button>
+                    <!-- Contenteditable rich body -->
+                    <div contenteditable="true" id="custom-body" class="rich-editor-body"
+                      data-placeholder="Hi {{ First Name }},&#10;&#10;I came across your profile and was really impressed by your work as a {{ Title }} at {{ Company }}. I'm a finance student and would love to connect for a quick 15-minute chat..."
+                      style="min-height:200px;font-family:Arial,sans-serif;"></div>
                   </div>
                 </div>
 
@@ -556,49 +611,12 @@
               <!-- Body label -->
               <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray-400);margin:14px 0 0;">Body</div>
 
-              <!-- Rich text toolbar -->
-              <div class="rich-toolbar" id="rich-toolbar">
-                <button class="tb-btn" title="Bold" onmousedown="event.preventDefault();execRichCmd('bold')"><b>B</b></button>
-                <button class="tb-btn" title="Italic" onmousedown="event.preventDefault();execRichCmd('italic')"><i>I</i></button>
-                <button class="tb-btn" title="Underline" onmousedown="event.preventDefault();execRichCmd('underline')"><u>U</u></button>
-                <div class="tb-sep"></div>
-                <label class="tb-btn" title="Text Color" style="cursor:pointer;position:relative;display:flex;align-items:center;gap:2px;">
-                  <span id="color-indicator" style="font-weight:700;border-bottom:3px solid #111;padding-bottom:1px;">A</span>
-                  <span style="font-size:9px;">▼</span>
-                  <input type="color" id="text-color-picker" value="#111111" style="position:absolute;width:100%;height:100%;top:0;left:0;opacity:0;cursor:pointer;" onchange="applyEditorColor(this.value)">
-                </label>
-                <div class="tb-sep"></div>
-                <select class="tb-select" id="font-family-select" onchange="applyEditorFont(this.value)" style="width:130px;">
-                  <option value="Arial" style="font-family:Arial">Arial</option>
-                  <option value="Times New Roman" style="font-family:'Times New Roman'">Times New Roman</option>
-                  <option value="Calibri" style="font-family:Calibri">Calibri</option>
-                  <option disabled>──────────</option>
-                  <option value="sans-serif">Sans Serif</option>
-                  <option value="serif">Serif</option>
-                  <option value="monospace">Fixed Width</option>
-                  <option value="Comic Sans MS" style="font-family:'Comic Sans MS'">Comic Sans MS</option>
-                  <option value="Garamond" style="font-family:Garamond">Garamond</option>
-                  <option value="Georgia" style="font-family:Georgia">Georgia</option>
-                  <option value="Tahoma" style="font-family:Tahoma">Tahoma</option>
-                  <option value="Trebuchet MS" style="font-family:'Trebuchet MS'">Trebuchet MS</option>
-                  <option value="Verdana" style="font-family:Verdana">Verdana</option>
-                </select>
-                <div class="tb-sep"></div>
-                <div style="position:relative;">
-                  <button class="tb-btn" title="Insert Variable" onmousedown="event.preventDefault();toggleVarMenu(event)" style="font-family:monospace;font-weight:700;font-size:12px;">{&thinsp;}</button>
-                  <div id="var-insert-menu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:white;border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.12);z-index:200;min-width:170px;padding:4px 0;">
-                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ First Name }}')">{{ First Name }}</div>
-                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Last Name }}')">{{ Last Name }}</div>
-                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Company }}')">{{ Company }}</div>
-                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Title }}')">{{ Title }}</div>
-                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ School }}')">{{ School }}</div>
-                    <div class="var-menu-item" onmousedown="event.preventDefault();insertVariable('{{ Location }}')">{{ Location }}</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Contenteditable rich body -->
-              <div contenteditable="true" id="editor-body" class="rich-editor-body" oninput="scheduleSaveDraft()" onblur="saveDraftField('body')"></div>
+              <!-- Plain-text body editor -->
+              <textarea class="editor-body-input" id="editor-body"
+                style="flex:1;min-height:0;resize:none;"
+                oninput="scheduleSaveDraft()"
+                onblur="saveDraftField('body')"
+                placeholder="Email body will appear here..."></textarea>
             </div>
           </div>
         </div>
