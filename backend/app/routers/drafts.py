@@ -54,6 +54,10 @@ class DraftPatch(BaseModel):
     body: str | None = None
 
 
+class ApprovePayload(BaseModel):
+    approved: bool = True
+
+
 class DraftsGeneratePayload(BaseModel):
     template_id: int | None = None
     resume_path: str | None = None
@@ -174,14 +178,14 @@ def patch_draft(draft_id: int, payload: DraftPatch, request: Request):
 
 
 @router.post("/api/drafts/{draft_id}/approve")
-def approve_draft(draft_id: int, request: Request, payload: dict = {}):
+def approve_draft(draft_id: int, request: Request, payload: ApprovePayload = None):
     user_id = _require_user(request)
     db = SessionLocal()
     try:
         d = db.query(Draft).filter(Draft.id == draft_id).first()
         if not d:
             raise HTTPException(status_code=404, detail="Draft not found")
-        approved = payload.get("approved", True)
+        approved = payload.approved if payload is not None else True
         d.status = DraftStatus.approved if approved else DraftStatus.generated
         db.commit()
         return {"id": d.id, "status": d.status.value}

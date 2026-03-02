@@ -140,24 +140,35 @@ body {
 }
 
 .sidebar-new-btn {
-  padding: 10px 10px 0;
+  padding: 12px 12px 4px;
 }
 
 .btn-new-campaign {
   width: 100%;
-  padding: 11px 16px;
+  padding: 14px 16px;
   background: var(--amber);
   color: var(--black);
   border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 700;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 800;
   cursor: pointer;
   text-align: center;
-  transition: background 0.15s;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
   letter-spacing: 0.01em;
+  box-shadow: 0 4px 14px rgba(251,139,30,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1.2;
 }
-.btn-new-campaign:hover { background: var(--amber-dark); }
+.btn-new-campaign:hover {
+  background: var(--amber-dark);
+  box-shadow: 0 6px 20px rgba(251,139,30,0.55);
+  transform: translateY(-1px);
+}
+.btn-new-campaign:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(251,139,30,0.4); }
 
 .sidebar-footer {
   padding: 12px 8px;

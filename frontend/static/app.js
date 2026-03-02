@@ -953,7 +953,9 @@ function renderDraftCards() {
   container.innerHTML = State.drafts.map((d, i) => {
     const isActive = i === State.currentDraftIdx;
     const statusColor = d.status === 'approved' ? 'var(--green)' : d.status === 'sent' ? 'var(--blue)' : 'var(--amber)';
-    const name = d.contact_name || d.contact?.name || `Contact ${i + 1}`;
+    const firstName = d.contact?.first_name || '';
+    const lastName  = d.contact?.last_name  || '';
+    const name = d.contact_name || d.contact?.name || `${firstName} ${lastName}`.trim() || `Contact ${i + 1}`;
     const company = d.contact_company || d.contact?.company || '';
     return `
       <div class="draft-card ${isActive ? 'active' : ''}" onclick="loadDraft(${i})">
@@ -986,7 +988,9 @@ function loadDraft(idx) {
   // Meta row
   const metaRow = document.getElementById('editor-meta-row');
   if (metaRow) {
-    const name    = d.contact_name    || d.contact?.name    || '';
+    const firstName = d.contact?.first_name || '';
+    const lastName  = d.contact?.last_name  || '';
+    const name    = d.contact_name    || d.contact?.name    || `${firstName} ${lastName}`.trim();
     const company = d.contact_company || d.contact?.company || '';
     const email   = d.contact_email   || d.contact?.email   || '';
     const status  = d.status || 'pending';
@@ -1176,11 +1180,6 @@ async function unapproveAll() {
 }
 
 function goToScheduleStep() {
-  const approvedCount = State.drafts.filter(d => d.status === 'approved').length;
-  if (approvedCount === 0) {
-    toast('Please approve at least one draft before going to Schedule.', 'error');
-    return;
-  }
   goToStep(4);
 }
 
