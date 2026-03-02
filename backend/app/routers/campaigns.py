@@ -231,9 +231,35 @@ def delete_campaign(campaign_id: int, request: Request):
         c = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == user_id).first()
         if not c:
             raise HTTPException(status_code=404, detail="Campaign not found")
+        # Manually delete child records in dependency order to handle SQLite FK constraints
+        draft_ids = [d.id for d in db.query(Draft).filter(Draft.campaign_id == campaign_id).all()]
+        if draft_ids:
+            db.query(SendJob).filter(SendJob.draft_id.in_(draft_ids)).delete(synchronize_session=False)
+        db.query(Draft).filter(Draft.campaign_id == campaign_id).delete(synchronize_session=False)
+        db.query(Contact).filter(Contact.campaign_id == campaign_id).delete(synchronize_session=False)
         db.delete(c)
         db.commit()
         return {"ok": True}
+    finally:
+        db.close()
+
+
+@router.delete("/all")
+def delete_all_campaigns(request: Request):
+    user_id = _require_user(request)
+    db = SessionLocal()
+    try:
+        campaign_ids = [c.id for c in db.query(Campaign).filter(Campaign.user_id == user_id).all()]
+        if not campaign_ids:
+            return {"ok": True, "deleted": 0}
+        draft_ids = [d.id for d in db.query(Draft).filter(Draft.campaign_id.in_(campaign_ids)).all()]
+        if draft_ids:
+            db.query(SendJob).filter(SendJob.draft_id.in_(draft_ids)).delete(synchronize_session=False)
+        db.query(Draft).filter(Draft.campaign_id.in_(campaign_ids)).delete(synchronize_session=False)
+        db.query(Contact).filter(Contact.campaign_id.in_(campaign_ids)).delete(synchronize_session=False)
+        db.query(Campaign).filter(Campaign.id.in_(campaign_ids)).delete(synchronize_session=False)
+        db.commit()
+        return {"ok": True, "deleted": len(campaign_ids)}
     finally:
         db.close()
 

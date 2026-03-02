@@ -119,6 +119,81 @@ GENERIC_KEYWORD_VARIANTS = {
 }
 SHORT_DESK_TOKENS = {"fx", "fi", "dcm", "ecm", "fig", "tmt", "ma", "mna"}
 
+# Finance domain synonym map — used for query expansion and soft title scoring.
+# Keys and values are lowercase. Both directions are covered.
+FINANCE_TITLE_SYNONYMS: dict[str, list[str]] = {
+    "investment banking": ["ibd", "investment banking division"],
+    "ibd": ["investment banking", "investment banking division"],
+    "investment banking division": ["investment banking", "ibd"],
+    "sales and trading": ["s&t", "trading", "markets"],
+    "s&t": ["sales and trading", "trading", "markets"],
+    "m&a": ["mergers and acquisitions", "mergers acquisitions"],
+    "mergers and acquisitions": ["m&a"],
+    "equity research": ["research analyst", "equities research", "equity coverage"],
+    "fixed income": ["rates", "credit", "bonds"],
+    "asset management": ["portfolio management", "investment management"],
+    "private equity": ["pe", "buyout", "growth equity"],
+    "pe": ["private equity", "buyout"],
+    "venture capital": ["vc", "venture investing"],
+    "vc": ["venture capital"],
+    "quantitative research": ["quant", "quantitative analyst", "quant research"],
+    "quant": ["quantitative", "quantitative research"],
+    "risk management": ["risk analyst", "risk"],
+    "vice president": ["vp"],
+    "vp": ["vice president"],
+    "managing director": ["md"],
+    "md": ["managing director"],
+    "executive director": ["ed"],
+    "ed": ["executive director"],
+    "commodities": ["commodity", "energy trading"],
+    "real estate": ["repe", "real assets"],
+    "leveraged finance": ["lev fin", "leveraged buyout", "lbo"],
+    "restructuring": ["rx", "distressed"],
+    "technology media telecom": ["tmt", "tech media telecom"],
+    "tmt": ["technology media telecom", "tech media telecom"],
+    "financial institutions group": ["fig", "banks coverage"],
+    "fig": ["financial institutions group"],
+    "global markets": ["markets", "sales and trading"],
+}
+
+
+def get_title_synonyms(keyword: str) -> list[str]:
+    """Return synonyms for a finance keyword (case-insensitive lookup)."""
+    kw_lower = keyword.strip().lower().replace("&", "and").replace("  ", " ").strip()
+    synonyms: list[str] = []
+    for term, syn_list in FINANCE_TITLE_SYNONYMS.items():
+        term_norm = term.replace("&", "and")
+        if term_norm in kw_lower or kw_lower in term_norm:
+            synonyms.extend(syn_list)
+            break
+    # Deduplicate, remove the keyword itself
+    seen: set[str] = {kw_lower}
+    deduped: list[str] = []
+    for s in synonyms:
+        s_lower = s.lower()
+        if s_lower not in seen:
+            seen.add(s_lower)
+            deduped.append(s)
+    return deduped
+
+
+def build_keyword_query_clause(keyword: str) -> str:
+    """Build a search query clause for a keyword, optionally expanding with synonyms.
+
+    E.g. "S&T" → '("S&T" OR "sales and trading" OR trading)'
+    """
+    kw = keyword.strip()
+    if not kw:
+        return ""
+    synonyms = get_title_synonyms(kw)
+    top_syns = synonyms[:2]  # limit to 2 synonyms to keep query concise
+    if not top_syns:
+        return f'"{kw}"' if " " in kw else kw
+    all_terms = [kw] + top_syns
+    quoted = [f'"{t}"' if " " in t else t for t in all_terms]
+    return f'({" OR ".join(quoted)})'
+
+
 SENIORITY_QUERY_MAP = {
     "Analyst": "Analyst",
     "Associate": "Associate",
@@ -289,6 +364,49 @@ def extract_company_from_role_text(role_text: str) -> str:
     ):
         return ""
     return role
+
+
+_ROLE_TITLE_KEYWORDS = re.compile(
+    r"\b(analyst|associate|vice president|vp|director|executive director|managing director|"
+    r"md|ed|officer|manager|trader|researcher|banker|consultant|specialist|engineer|advisor)\b",
+    re.IGNORECASE,
+)
+
+
+def clean_title_for_email(role_company_text: str) -> str:
+    """Return only the job role, stripping the 'at Company' or '- Company' suffix.
+
+    Examples:
+        "Investment Banking Analyst at Goldman Sachs"  → "Investment Banking Analyst"
+        "Vice President - Morgan Stanley"              → "Vice President"
+        "Goldman Sachs | Investment Banking Analyst"   → "Investment Banking Analyst"
+        "Analyst"                                      → "Analyst"  (unchanged)
+    """
+    text = (role_company_text or "").strip()
+    if not text:
+        return text
+
+    # Pattern 1: "Role at Company" — most common LinkedIn title format
+    at_match = re.search(r"\s+at\s+\S", text, flags=re.IGNORECASE)
+    if at_match:
+        cleaned = text[:at_match.start()].strip()
+        if cleaned:
+            return cleaned
+
+    # Pattern 2: "Role - Company" (role comes first, role contains role keywords)
+    dash_parts = [p.strip() for p in text.split(" - ") if p.strip()]
+    if len(dash_parts) >= 2 and _ROLE_TITLE_KEYWORDS.search(dash_parts[0]):
+        return dash_parts[0]
+
+    # Pattern 3: "Company | Role" or "Role | Company" (pipe-separated)
+    pipe_parts = [p.strip() for p in text.split(" | ") if p.strip()]
+    if len(pipe_parts) >= 2:
+        # Return whichever segment looks like a role
+        for part in pipe_parts:
+            if _ROLE_TITLE_KEYWORDS.search(part):
+                return part
+
+    return text
 
 
 def resolve_domain(raw_company: str, normalized_company: str, parsed_title: str, full_result_title: str) -> str | None:
@@ -936,6 +1054,19 @@ def generate_contacts(filters: dict[str, Any], job_context: JobContextLike, serp
     seen_people: set[str] = set()
     query_count = 0
 
+    # Build a school clause once — included in every query when schools are specified.
+    # Using the school name as a search term forces Google to only return profiles
+    # that mention that school (education section is indexed). With multiple schools,
+    # we use OR so any matching school satisfies the filter.
+    if selected_schools:
+        if len(selected_schools) == 1:
+            school_query_clause = f' "{selected_schools[0]}"'
+        else:
+            school_terms = " OR ".join(f'"{s}"' for s in selected_schools[:3])
+            school_query_clause = f' ({school_terms})'
+    else:
+        school_query_clause = ""
+
     for raw_company in companies:
         base_company = normalize_company_name(raw_company)
         company_candidates: list[dict[str, Any]] = []
@@ -953,7 +1084,8 @@ def generate_contacts(filters: dict[str, Any], job_context: JobContextLike, serp
                         break
 
                     level_clause = f" {SENIORITY_QUERY_MAP.get(level_filter, level_filter)}" if level_filter else ""
-                    query = f'site:linkedin.com/in {canonicalize_search_keyword(keyword)}{level_clause} {raw_company} "{city_short}"'
+                    kw_clause = build_keyword_query_clause(canonicalize_search_keyword(keyword))
+                    query = f'site:linkedin.com/in {kw_clause}{level_clause} "{raw_company}" "{city_short}"{school_query_clause}'
                     query_count += 1
 
                     for result in google_search(query, api_key=serpapi_key, num=8):
@@ -979,9 +1111,49 @@ def generate_contacts(filters: dict[str, Any], job_context: JobContextLike, serp
                             precision_mode="search",
                         )
 
-                        # Skip only if no parseable name — save all other results
+                        # Skip if no parseable name
                         if not first:
                             continue
+
+                        # --- HARD COMPANY FILTER ---
+                        # The person's LinkedIn title must mention the target company.
+                        # We check multiple representations:
+                        #  1. Full role/company text (e.g. "Analyst at Goldman Sachs")
+                        #  2. Full Google result title (catches "Name - Role - Company" formats)
+                        #  3. Extracted company part only (catches abbreviations: "at GS" → "GS"
+                        #     which matches "Goldman Sachs" via the acronym check in
+                        #     companies_likely_match)
+                        full_result_title = result.get("title", "")
+                        extracted_co = extract_company_from_role_text(role_company_text or "")
+                        title_has_company = (
+                            companies_likely_match(role_company_text or "", raw_company)
+                            or companies_likely_match(full_result_title, raw_company)
+                            or (extracted_co and companies_likely_match(extracted_co, raw_company))
+                        )
+                        if not title_has_company:
+                            continue  # person does not appear to work at target company
+
+                        # Skip former employees and interns
+                        primary_title_segment = (role_company_text or "").split("|")[0].split(" - ")[0].strip()
+                        if title_has_former_markers(primary_title_segment):
+                            continue
+                        if title_has_intern_or_nonfulltime_markers(primary_title_segment):
+                            continue
+
+                        # --- HARD SCHOOL FILTER ---
+                        # When the user selected school filters, only keep contacts where
+                        # at least one target school appears in the result text.
+                        # We check the title, snippet, and full Google result title.
+                        if selected_schools:
+                            result_text_norm = normalize_lookup_text(
+                                " ".join([role_company_text or "", snippet or "", full_result_title])
+                            )
+                            school_found = any(
+                                normalize_lookup_text(s) in result_text_norm
+                                for s in selected_schools
+                            )
+                            if not school_found:
+                                continue
 
                         title_plus_context = " ".join([str(role_company_text or ""), str(snippet or "")]).strip()
                         best_any_keyword_hit, best_any_keyword_score, _ = best_keyword_match(keywords, title_plus_context)
@@ -1021,23 +1193,30 @@ def generate_contacts(filters: dict[str, Any], job_context: JobContextLike, serp
                             current_company_confirmed=is_current,
                         )
 
-                        unique_key = (
-                            email.lower()
-                            if email != "N/A"
-                            else f"{first}|{last}|{raw_company}|{result.get('url','')}".lower()
-                        )
+                        # Dedup: LinkedIn URL is the most stable identity key.
+                        # Fall back to email, then name+company.
+                        linkedin_url_norm = (result.get("url") or "").strip().lower()
+                        if linkedin_url_norm:
+                            unique_key = f"url:{linkedin_url_norm}"
+                        elif email != "N/A":
+                            unique_key = f"email:{email.lower()}"
+                        else:
+                            unique_key = f"name:{first}|{last}|{raw_company}".lower()
                         if unique_key in seen_people:
                             continue
                         seen_people.add(unique_key)
 
-                        # Prefer raw_company (what user typed) to avoid truncated snippet names
-                        display_company = format_display_company(raw_company.strip(), parsed_current_company, base_company)
+                        # Always display the company name exactly as the user typed it.
+                        # Strip company suffix from title so "{{ Title }} at {{ Company }}"
+                        # in email drafts doesn't produce "... at GS at Goldman Sachs".
+                        display_company = raw_company.strip() or base_company
+                        clean_title = clean_title_for_email(role_company_text or "")
                         company_candidates.append(
                             {
                                 "full_name": full_name,
                                 "first_name": first or None,
                                 "last_name": last or None,
-                                "title": role_company_text or None,
+                                "title": clean_title or role_company_text or None,
                                 "company": display_company,
                                 "city": actual_city,
                                 "school": matched_school,

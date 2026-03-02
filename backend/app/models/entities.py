@@ -68,8 +68,8 @@ class Campaign(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
     user: Mapped["User"] = relationship("User", back_populates="campaigns")
-    contacts: Mapped[list["Contact"]] = relationship("Contact", back_populates="campaign")
-    drafts: Mapped[list["Draft"]] = relationship("Draft", back_populates="campaign")
+    contacts: Mapped[list["Contact"]] = relationship("Contact", back_populates="campaign", cascade="all, delete-orphan")
+    drafts: Mapped[list["Draft"]] = relationship("Draft", back_populates="campaign", cascade="all, delete-orphan")
 
 
 class Contact(Base):
@@ -92,7 +92,7 @@ class Contact(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     campaign: Mapped["Campaign"] = relationship("Campaign", back_populates="contacts")
-    drafts: Mapped[list["Draft"]] = relationship("Draft", back_populates="contact")
+    drafts: Mapped[list["Draft"]] = relationship("Draft", back_populates="contact", cascade="all, delete-orphan")
 
 
 class Draft(Base):
@@ -116,7 +116,7 @@ class Draft(Base):
     campaign: Mapped["Campaign"] = relationship("Campaign", back_populates="drafts")
     contact: Mapped["Contact"] = relationship("Contact", back_populates="drafts")
     template: Mapped["Template | None"] = relationship("Template")
-    send_jobs: Mapped[list["SendJob"]] = relationship("SendJob", back_populates="draft")
+    send_jobs: Mapped[list["SendJob"]] = relationship("SendJob", back_populates="draft", cascade="all, delete-orphan")
 
 
 class Template(Base):

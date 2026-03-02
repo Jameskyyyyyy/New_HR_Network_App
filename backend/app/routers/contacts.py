@@ -110,7 +110,10 @@ def generate(payload: GenerateContactsPayload, request: Request):
         keywords = [k.strip() for k in payload.title_keywords.split(",") if k.strip()]
 
         n_companies = max(1, len(companies))
-        max_per_company = max(3, payload.target_count // n_companies)
+        # Divide total target evenly across companies (minimum 1 per company)
+        max_per_company = max(1, payload.target_count // n_companies)
+        # Give a small surplus so we can trim to exact target after dedup
+        gather_target_per_company = max_per_company + 2
 
         filters = {
             "companies": companies,
@@ -120,7 +123,7 @@ def generate(payload: GenerateContactsPayload, request: Request):
             "custom_keywords": keywords,
             "front_office_keywords": [],
             "hr_keywords": [],
-            "max_per_company": max_per_company,
+            "max_per_company": gather_target_per_company,
         }
 
         job_context = JobContextLike(
@@ -137,6 +140,9 @@ def generate(payload: GenerateContactsPayload, request: Request):
         # Filter duplicates
         if payload.avoid_duplicates:
             raw_contacts = [c for c in raw_contacts if c.get("email") not in previously_sent]
+
+        # Trim to exact target count
+        raw_contacts = raw_contacts[:payload.target_count]
 
         # Save to DB
         saved: list[Contact] = []
