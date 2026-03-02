@@ -44,6 +44,9 @@
       <button class="nav-item" onclick="showPage('help')">
         <span class="nav-icon">❓</span> Help &amp; Docs
       </button>
+      <button class="nav-item" onclick="logout()" style="color:#e53e3e;">
+        <span class="nav-icon">🚪</span> Log Out
+      </button>
     </div>
   </aside>
 
@@ -504,22 +507,26 @@
           </div>
         </div>
 
-        <div class="draft-split">
+        <div class="draft-split" style="flex:1;min-height:0;">
           <!-- Left: draft list -->
           <div class="draft-list">
             <div class="draft-list-header">
               Draft List <span class="nav-badge" id="draft-list-count">0</span>
             </div>
             <div class="draft-list-actions">
+              <button class="btn btn-ghost full-width" onclick="goToStep(2)">← Back to Draft Settings</button>
               <button class="btn btn-teal full-width" onclick="approveSelected()">✓ Approve Selected</button>
               <button class="btn btn-black full-width" onclick="approveAll()">✓✓ Approve All</button>
-              <button class="btn btn-primary full-width" onclick="goToStep(4)">→ Go to Schedule</button>
+              <button class="btn btn-ghost full-width" onclick="unapproveAll()" style="color:#e53e3e;border-color:#fed7d7;">↩ Un-approve All</button>
+              <div style="font-size:11px;color:var(--gray-400);text-align:center;margin-top:6px;line-height:1.4;">
+                Approve drafts first, then use<br>Go to Schedule (bottom-right).
+              </div>
             </div>
             <div class="draft-cards" id="draft-cards-list"></div>
           </div>
 
           <!-- Right: draft editor -->
-          <div class="draft-editor">
+          <div class="draft-editor" style="display:flex;flex-direction:column;">
             <div class="draft-editor-header">
               <span class="card-title">Draft Preview &amp; Edit</span>
               <div style="display:flex;align-items:center;gap:10px;">
@@ -548,6 +555,10 @@
             </div>
           </div>
         </div>
+        <!-- Step 3 footer: Go to Schedule lives bottom-right -->
+        <div style="display:flex;justify-content:flex-end;align-items:center;padding:10px 20px;border-top:1px solid var(--gray-200);background:white;flex-shrink:0;">
+          <button class="btn btn-primary" style="padding:10px 24px;font-size:14px;" onclick="goToScheduleStep()">→ Go to Schedule</button>
+        </div>
       </div>
 
       <!-- Step 4: Schedule & Send -->
@@ -573,11 +584,18 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Send Mode</label>
-                <select class="form-select" id="send-mode">
+                <select class="form-select" id="send-mode" onchange="onSendModeChange()">
                   <option value="now">Send now</option>
                   <option value="scheduled">Scheduled</option>
                 </select>
               </div>
+            </div>
+
+            <!-- Scheduled first-send datetime: shown only when mode = scheduled -->
+            <div id="scheduled-start-group" class="form-group mb-16 hidden">
+              <label class="form-label">First Email Send Time</label>
+              <input type="datetime-local" class="form-input" id="scheduled-start" style="max-width:280px;" oninput="updateSendSummary()">
+              <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">Subsequent emails follow the interval and daily window settings below.</div>
             </div>
 
             <div class="divider"></div>
@@ -620,11 +638,11 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Interval Min (min)</label>
-                <input type="number" class="form-input" id="interval-min" value="1" min="0">
+                <input type="number" class="form-input" id="interval-min" value="1" min="0" oninput="updateSendSummary()">
               </div>
               <div class="form-group">
                 <label class="form-label">Interval Max (min)</label>
-                <input type="number" class="form-input" id="interval-max" value="15" min="1">
+                <input type="number" class="form-input" id="interval-max" value="15" min="1" oninput="updateSendSummary()">
               </div>
             </div>
             <div class="info-note mb-16">
@@ -639,6 +657,8 @@
                 <div>📅 Send days: <span id="summary-days">Mon–Fri</span></div>
                 <div>⏰ Window: <span id="summary-window">09:30 – 17:00</span></div>
                 <div>🔢 Daily cap: <span id="summary-cap">20</span> emails</div>
+                <div>⏱ Interval: <span id="summary-interval">1–15 min random</span></div>
+                <div id="summary-first-send-row" class="hidden">🗓 First send: <span id="summary-first-send">—</span></div>
               </div>
             </div>
 
@@ -647,8 +667,11 @@
             </div>
 
             <button class="btn btn-primary btn-xl full-width" id="btn-send-now" onclick="sendCampaign()" style="height:52px;">
-              ✈ Send Now
+              <span id="send-btn-label">✈ Send Now</span>
             </button>
+            <div id="send-now-warning" style="color:#e53e3e;font-size:11px;margin-top:6px;text-align:center;">
+              ⚠ All emails will be sent immediately. This may trigger your Gmail daily send limit.
+            </div>
           </div>
         </div>
       </div>

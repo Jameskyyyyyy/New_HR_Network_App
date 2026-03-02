@@ -314,6 +314,7 @@ function openCampaign(id) {
 
 async function loadExistingCampaignData(id) {
   try {
+    // GET /api/campaigns/{id} already returns contacts inline — no separate call needed
     const data = await api('GET', `/api/campaigns/${id}`);
     if (!data) return;
     State.currentCampaign = data;
@@ -323,10 +324,10 @@ async function loadExistingCampaignData(id) {
       const counter = document.getElementById('w-name-count');
       if (counter) counter.textContent = `${nameEl.value.length}/100`;
     }
-    // Load existing contacts
-    const contactData = await api('GET', `/api/campaigns/${id}/contacts`);
-    if (contactData && contactData.contacts && contactData.contacts.length) {
-      State.contacts = contactData.contacts.map(c => ({ ...c, selected: c.selected || false }));
+    // Restore existing contacts (included in campaign response)
+    const existing = data.contacts || [];
+    if (existing.length) {
+      State.contacts = existing.map(c => ({ ...c, selected: c.selected || false }));
       State.filteredContacts = [...State.contacts];
       renderContactsTable(State.contacts);
       document.getElementById('contacts-table-section')?.classList.remove('hidden');
@@ -441,6 +442,7 @@ async function generateContacts() {
   const payload = {
     name,
     target_count: targetCount,
+    campaign_id: State.currentCampaign?.id || null,
     company_list: State.tags.companies.join(','),
     title_keywords: State.tags.titles.join(','),
     location_list: State.tags.locations.join(','),
@@ -455,12 +457,9 @@ async function generateContacts() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating...'; }
 
   try {
+    // Always use /api/contacts/generate — campaign_id in payload links to existing campaign
     let result;
-    if (State.currentCampaign?.id) {
-      result = await api('POST', `/api/campaigns/${State.currentCampaign.id}/contacts/generate`, payload);
-    } else {
-      result = await api('POST', '/api/contacts/generate', payload);
-    }
+    result = await api('POST', '/api/contacts/generate', payload);
     if (!result) return;
 
     // Save campaign reference
@@ -1057,6 +1056,35 @@ async function approveAll() {
   }
 }
 
+async function unapproveAll() {
+  showLoading('Reverting approvals...');
+  try {
+    for (const d of State.drafts) {
+      if (d.status === 'approved') {
+        await api('POST', `/api/drafts/${d.id}/approve`, { approved: false });
+        d.status = 'generated';
+      }
+    }
+    renderDraftCards();
+    updateDraftStats();
+    if (State.drafts.length) loadDraft(State.currentDraftIdx);
+    toast('All approvals reverted', 'success');
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+function goToScheduleStep() {
+  const approvedCount = State.drafts.filter(d => d.status === 'approved').length;
+  if (approvedCount === 0) {
+    toast('Please approve at least one draft before going to Schedule.', 'error');
+    return;
+  }
+  goToStep(4);
+}
+
 async function approveSelected() {
   const selectedDrafts = State.drafts.filter((d, i) => {
     const card = document.querySelector(`.draft-card:nth-child(${i + 1})`);
@@ -1117,7 +1145,7 @@ async function loadStep4() {
 
     // Summary
     set('summary-approved', approvedCount);
-    updateSendSummary();
+    onSendModeChange();  // sets button label, shows/hides fields, calls updateSendSummary
 
     // Show/hide warning
     const warning = document.getElementById('send-warning');
@@ -1130,15 +1158,28 @@ async function loadStep4() {
 }
 
 function updateSendSummary() {
-  const days = getDayChips().join(', ') || 'None';
-  const start = document.getElementById('window-start')?.value || '09:30';
-  const end   = document.getElementById('window-end')?.value   || '17:00';
-  const cap   = document.getElementById('daily-cap')?.value    || '20';
+  const days  = getDayChips().join(', ') || 'None';
+  const start = document.getElementById('window-start')?.value  || '09:30';
+  const end   = document.getElementById('window-end')?.value    || '17:00';
+  const cap   = document.getElementById('daily-cap')?.value     || '20';
+  const iMin  = document.getElementById('interval-min')?.value  || '1';
+  const iMax  = document.getElementById('interval-max')?.value  || '15';
+  const mode  = document.getElementById('send-mode')?.value     || 'now';
+  const scheduledVal = document.getElementById('scheduled-start')?.value || '';
 
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('summary-days',   days);
-  set('summary-window', `${start} – ${end}`);
-  set('summary-cap',    cap);
+  set('summary-days',     days);
+  set('summary-window',   `${start} – ${end}`);
+  set('summary-cap',      cap);
+  set('summary-interval', `${iMin}–${iMax} min random`);
+
+  const firstSendRow = document.getElementById('summary-first-send-row');
+  if (mode === 'scheduled' && scheduledVal) {
+    set('summary-first-send', new Date(scheduledVal).toLocaleString());
+    firstSendRow?.classList.remove('hidden');
+  } else {
+    firstSendRow?.classList.add('hidden');
+  }
 }
 
 async function sendCampaign() {
@@ -1149,16 +1190,20 @@ async function sendCampaign() {
   }
   if (!confirm(`Send ${approvedCount} email${approvedCount !== 1 ? 's' : ''}? This cannot be undone.`)) return;
 
+  const sendMode = document.getElementById('send-mode')?.value || 'now';
   const payload = {
-    campaign_id:   State.currentCampaign.id,
-    send_mode:     document.getElementById('send-mode')?.value || 'now',
-    allowed_days:  getDayChips(),
-    window_start:  document.getElementById('window-start')?.value  || '09:30',
-    window_end:    document.getElementById('window-end')?.value    || '17:00',
-    daily_cap:     parseInt(document.getElementById('daily-cap')?.value    || '20'),
-    hourly_cap:    parseInt(document.getElementById('hourly-cap')?.value   || '15'),
-    interval_min:  parseInt(document.getElementById('interval-min')?.value || '1'),
-    interval_max:  parseInt(document.getElementById('interval-max')?.value || '15'),
+    campaign_id:     State.currentCampaign.id,
+    send_mode:       sendMode,
+    allowed_days:    getDayChips(),
+    window_start:    document.getElementById('window-start')?.value  || '09:30',
+    window_end:      document.getElementById('window-end')?.value    || '17:00',
+    daily_cap:       parseInt(document.getElementById('daily-cap')?.value    || '20'),
+    hourly_cap:      parseInt(document.getElementById('hourly-cap')?.value   || '15'),
+    interval_min:    parseInt(document.getElementById('interval-min')?.value || '1'),
+    interval_max:    parseInt(document.getElementById('interval-max')?.value || '15'),
+    scheduled_start: sendMode === 'scheduled'
+      ? (document.getElementById('scheduled-start')?.value || null)
+      : null,
   };
 
   showLoading('Sending campaign...');
@@ -1179,6 +1224,32 @@ async function sendCampaign() {
 
 function getDayChips() {
   return [...document.querySelectorAll('.day-chip.selected')].map(d => d.dataset.day);
+}
+
+function onSendModeChange() {
+  const mode = document.getElementById('send-mode')?.value || 'now';
+  const scheduledGroup  = document.getElementById('scheduled-start-group');
+  const sendNowWarning  = document.getElementById('send-now-warning');
+  const sendBtnLabel    = document.getElementById('send-btn-label');
+
+  if (mode === 'scheduled') {
+    scheduledGroup?.classList.remove('hidden');
+    sendNowWarning?.classList.add('hidden');
+    if (sendBtnLabel) sendBtnLabel.textContent = '📅 Scheduled Send';
+    // Default first-send to now + 1 hour if not set
+    const el = document.getElementById('scheduled-start');
+    if (el && !el.value) {
+      const d = new Date(Date.now() + 60 * 60 * 1000);
+      // datetime-local needs "YYYY-MM-DDTHH:MM"
+      d.setSeconds(0, 0);
+      el.value = d.toISOString().slice(0, 16);
+    }
+  } else {
+    scheduledGroup?.classList.add('hidden');
+    sendNowWarning?.classList.remove('hidden');
+    if (sendBtnLabel) sendBtnLabel.textContent = '✈ Send Now';
+  }
+  updateSendSummary();
 }
 
 // ── Templates ─────────────────────────────────────────────────────────────────
@@ -1446,7 +1517,7 @@ async function logout() {
   } catch (e) {
     // Continue regardless
   }
-  window.location.href = '/';
+  window.location.href = '/login';
 }
 
 async function confirmDeleteAll() {
