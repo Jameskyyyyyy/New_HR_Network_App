@@ -283,7 +283,8 @@ async function deleteCampaign(id) {
   try {
     await api('DELETE', `/api/campaigns/${id}`);
     toast('Campaign deleted', 'success');
-    State.campaigns = State.campaigns.filter(c => c.id !== id);
+    const numId = Number(id);
+    State.campaigns = State.campaigns.filter(c => c.id !== numId);
     filterCampaigns();
   } catch (e) {
     toast(e.message, 'error');
@@ -1528,7 +1529,7 @@ async function confirmDeleteAll() {
     await api('DELETE', '/api/campaigns/all');
     State.campaigns = [];
     toast('All campaigns deleted', 'success');
-    showPage('dashboard');
+    filterCampaigns();
   } catch (e) {
     toast(e.message, 'error');
   } finally {
