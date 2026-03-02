@@ -277,10 +277,11 @@
                   <input type="text" class="tag-text-input" id="titles-input" placeholder="Type title keyword + Enter">
                 </div>
                 <div class="tag-suggestions" id="titles-suggestions">
+                  <span class="tag-suggestion" onclick="addTag('titles','Investment Banking Analyst')">IB Analyst</span>
+                  <span class="tag-suggestion" onclick="addTag('titles','Sales and Trading Analyst')">S&amp;T Analyst</span>
+                  <span class="tag-suggestion" onclick="addTag('titles','Private Equity Analyst')">PE Analyst</span>
+                  <span class="tag-suggestion" onclick="addTag('titles','Equity Research Analyst')">ER Analyst</span>
                   <span class="tag-suggestion" onclick="addTag('titles','Investment Analyst')">Investment Analyst</span>
-                  <span class="tag-suggestion" onclick="addTag('titles','Investment Associate')">Investment Associate</span>
-                  <span class="tag-suggestion" onclick="addTag('titles','PE Analyst')">PE Analyst</span>
-                  <span class="tag-suggestion" onclick="addTag('titles','Fixed Income')">Fixed Income</span>
                 </div>
               </div>
             </div>
@@ -306,10 +307,11 @@
                   <input type="text" class="tag-text-input" id="schools-input" placeholder="Type school + Enter">
                 </div>
                 <div class="tag-suggestions">
-                  <span class="tag-suggestion" onclick="addTag('schools','Columbia University')">Columbia</span>
-                  <span class="tag-suggestion" onclick="addTag('schools','University of Chicago')">UChicago</span>
                   <span class="tag-suggestion" onclick="addTag('schools','NYU Stern')">NYU Stern</span>
+                  <span class="tag-suggestion" onclick="addTag('schools','University of Chicago')">UChicago</span>
+                  <span class="tag-suggestion" onclick="addTag('schools','Columbia University')">Columbia</span>
                   <span class="tag-suggestion" onclick="addTag('schools','Wharton')">Wharton</span>
+                  <span class="tag-suggestion" onclick="addTag('schools','Duke University')">Duke</span>
                 </div>
               </div>
             </div>
@@ -865,6 +867,19 @@
     </div>
 
   </main>
+</div>
+
+<!-- Confirm modal -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:32px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center;">
+    <div style="font-size:32px;margin-bottom:12px;">🗑️</div>
+    <div style="font-size:17px;font-weight:700;color:#111;margin-bottom:8px;" id="confirm-modal-title">Are you sure?</div>
+    <div style="font-size:13px;color:#666;margin-bottom:28px;" id="confirm-modal-body">This action cannot be undone.</div>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button class="btn btn-ghost" style="min-width:100px;" onclick="closeConfirmModal()">No, cancel</button>
+      <button class="btn btn-danger" style="min-width:100px;" id="confirm-modal-yes">Yes, delete</button>
+    </div>
+  </div>
 </div>
 
 <!-- Toast container -->

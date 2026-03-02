@@ -283,9 +283,7 @@ async function deleteCampaign(id) {
   try {
     await api('DELETE', `/api/campaigns/${id}`);
     toast('Campaign deleted', 'success');
-    const numId = Number(id);
-    State.campaigns = State.campaigns.filter(c => c.id !== numId);
-    filterCampaigns();
+    await loadCampaigns();
   } catch (e) {
     toast(e.message, 'error');
   }
@@ -344,7 +342,12 @@ function openNewCampaign() {
   State.contacts = [];
   State.filteredContacts = [];
   State.drafts = [];
-  State.tags = { companies: [], titles: [], locations: [], schools: [] };
+  State.tags = {
+    companies: [],
+    titles: ['Investment Banking Analyst', 'Sales and Trading Analyst', 'Private Equity Analyst', 'Equity Research Analyst', 'Investment Analyst'],
+    locations: [],
+    schools: [],
+  };
   resetWizardForm();
   goToStep(1);
   showPage('wizard');
@@ -355,11 +358,12 @@ function resetWizardForm() {
   if (nameEl) nameEl.value = '';
   const countEl = document.getElementById('w-target-count');
   if (countEl) countEl.value = '10';
-  // Clear tags
-  ['companies', 'titles', 'locations', 'schools'].forEach(f => {
-    State.tags[f] = [];
-    renderTags(f);
-  });
+  // Reset tags — titles get default values, others clear
+  State.tags.companies = [];
+  State.tags.titles = ['Investment Banking Analyst', 'Sales and Trading Analyst', 'Private Equity Analyst', 'Equity Research Analyst', 'Investment Analyst'];
+  State.tags.locations = [];
+  State.tags.schools = [];
+  ['companies', 'titles', 'locations', 'schools'].forEach(f => renderTags(f));
   // Reset seniority
   document.querySelectorAll('.seniority-chip').forEach((chip, i) => {
     chip.classList.toggle('selected', i < 2); // Analyst + Associate default
@@ -414,6 +418,18 @@ function setupTagInput(field, inputId) {
       State.tags[field].pop();
       renderTags(field);
     }
+  });
+  // Paste support: split pasted text by newlines and/or commas, add each as a tag
+  inp.addEventListener('paste', e => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    const items = text.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+    if (items.length <= 1) {
+      // Single item — just insert into the input so user can confirm with Enter
+      inp.value = items[0] || '';
+      return;
+    }
+    items.forEach(item => addTag(field, item));
   });
 }
 
@@ -1521,20 +1537,44 @@ async function logout() {
   window.location.href = '/login';
 }
 
-async function confirmDeleteAll() {
-  const confirmation = prompt('Type DELETE to confirm removing all campaigns:');
-  if (confirmation !== 'DELETE') { toast('Cancelled', 'default'); return; }
-  showLoading('Deleting all campaigns...');
-  try {
-    await api('DELETE', '/api/campaigns/all');
-    State.campaigns = [];
-    toast('All campaigns deleted', 'success');
-    filterCampaigns();
-  } catch (e) {
-    toast(e.message, 'error');
-  } finally {
-    hideLoading();
-  }
+function showConfirmModal(title, body, onConfirm) {
+  const modal = document.getElementById('confirm-modal');
+  document.getElementById('confirm-modal-title').textContent = title;
+  document.getElementById('confirm-modal-body').textContent = body;
+  const yesBtn = document.getElementById('confirm-modal-yes');
+  // Replace button to remove previous listener
+  const newYes = yesBtn.cloneNode(true);
+  yesBtn.parentNode.replaceChild(newYes, yesBtn);
+  newYes.addEventListener('click', () => {
+    closeConfirmModal();
+    onConfirm();
+  });
+  modal.style.display = 'flex';
+}
+
+function closeConfirmModal() {
+  const modal = document.getElementById('confirm-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmDeleteAll() {
+  showConfirmModal(
+    'Delete all campaigns?',
+    'This will permanently remove all campaigns, contacts, and drafts. This cannot be undone.',
+    async () => {
+      showLoading('Deleting all campaigns...');
+      try {
+        await api('DELETE', '/api/campaigns/all');
+        State.campaigns = [];
+        toast('All campaigns deleted', 'success');
+        filterCampaigns();
+      } catch (e) {
+        toast(e.message, 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+  );
 }
 
 // ── Utility helpers ───────────────────────────────────────────────────────────
