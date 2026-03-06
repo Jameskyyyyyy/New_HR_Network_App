@@ -408,17 +408,43 @@ function renderTags(field) {
 }
 
 const TAG_SUGGESTIONS = {
-  companies: ['Goldman Sachs', 'BlackRock', 'Morgan Stanley', 'Citadel', 'KKR', 'Blackstone',
-              'JPMorgan', 'Lazard', 'Evercore', 'Centerview', 'Bank of America', 'Barclays',
-              'Deutsche Bank', 'UBS', 'Credit Suisse', 'Jefferies', 'Houlihan Lokey', 'PJT Partners'],
-  titles:    ['Investment Banking Analyst', 'Sales and Trading Analyst', 'Private Equity Analyst',
-              'Equity Research Analyst', 'Investment Analyst', 'M&A Analyst', 'Corporate Finance Analyst',
-              'Leveraged Finance Analyst', 'Restructuring Analyst', 'Capital Markets Analyst'],
-  locations: ['New York, NY', 'San Francisco, CA', 'Chicago, IL', 'Boston, MA',
-              'Los Angeles, CA', 'Houston, TX', 'Washington, DC', 'Dallas, TX'],
-  schools:   ['NYU Stern', 'University of Chicago', 'Columbia University', 'Wharton',
-              'Duke University', 'Harvard University', 'Yale University', 'Princeton University',
-              'MIT', 'Stanford University', 'Georgetown', 'Notre Dame'],
+  companies: [
+    'Goldman Sachs', 'Morgan Stanley', 'JPMorgan', 'Bank of America', 'Citigroup',
+    'Barclays', 'Deutsche Bank', 'UBS', 'Credit Suisse', 'Jefferies',
+    'BlackRock', 'Vanguard', 'Fidelity', 'PIMCO', 'Bridgewater Associates',
+    'Citadel', 'Two Sigma', 'D.E. Shaw', 'Renaissance Technologies', 'Point72',
+    'KKR', 'Blackstone', 'Apollo Global', 'Carlyle Group', 'Warburg Pincus',
+    'Lazard', 'Evercore', 'Centerview Partners', 'Houlihan Lokey', 'PJT Partners',
+    'Rothschild', 'Moelis', 'Guggenheim', 'Greenhill', 'Perella Weinberg',
+  ],
+  titles: [
+    'Investment Banking Analyst', 'Investment Banking Associate',
+    'Sales and Trading Analyst', 'Sales and Trading Associate',
+    'Private Equity Analyst', 'Private Equity Associate',
+    'Equity Research Analyst', 'Equity Research Associate',
+    'Investment Analyst', 'Investment Associate',
+    'M&A Analyst', 'M&A Associate',
+    'Corporate Finance Analyst', 'Corporate Development Analyst',
+    'Leveraged Finance Analyst', 'Restructuring Analyst',
+    'Capital Markets Analyst', 'Debt Capital Markets Analyst',
+    'Equity Capital Markets Analyst', 'Quantitative Analyst',
+    'Risk Analyst', 'Compliance Analyst', 'Portfolio Analyst',
+  ],
+  locations: [
+    'New York, NY', 'San Francisco, CA', 'Chicago, IL', 'Boston, MA',
+    'Los Angeles, CA', 'Houston, TX', 'Washington, DC', 'Dallas, TX',
+    'Atlanta, GA', 'Miami, FL', 'Seattle, WA', 'Denver, CO',
+    'London, UK', 'Hong Kong', 'Singapore', 'Toronto, Canada',
+  ],
+  schools: [
+    'NYU Stern', 'Columbia University', 'Wharton (UPenn)',
+    'Harvard University', 'Yale University', 'Princeton University',
+    'MIT', 'Stanford University', 'University of Chicago',
+    'Duke University', 'Georgetown University', 'Notre Dame',
+    'Cornell University', 'Dartmouth College', 'Northwestern University',
+    'University of Michigan', 'UVA Darden', 'Carnegie Mellon',
+    'Vanderbilt University', 'Emory University',
+  ],
 };
 
 function setupTagInput(field, inputId) {
@@ -428,29 +454,32 @@ function setupTagInput(field, inputId) {
   let activeIdx = -1;
 
   function getMatches(q) {
-    if (!q) return [];
+    const all = TAG_SUGGESTIONS[field].filter(s => !State.tags[field].includes(s));
+    if (!q) return all;
     const lower = q.toLowerCase();
-    return TAG_SUGGESTIONS[field].filter(s =>
-      s.toLowerCase().includes(lower) && !State.tags[field].includes(s)
-    );
+    return all.filter(s => s.toLowerCase().includes(lower));
   }
 
   function renderDropdown(matches) {
     if (!dropdown) return;
     if (!matches.length) { dropdown.classList.remove('open'); return; }
     activeIdx = -1;
-    dropdown.innerHTML = matches.map((m, i) =>
+    dropdown.innerHTML = matches.map(m =>
       `<div class="tag-dropdown-item" data-val="${m}" onmousedown="event.preventDefault()">${m}</div>`
     ).join('');
     dropdown.querySelectorAll('.tag-dropdown-item').forEach(el => {
       el.addEventListener('mousedown', () => {
         addTag(field, el.dataset.val);
         inp.value = '';
-        dropdown.classList.remove('open');
+        renderDropdown(getMatches(''));
       });
     });
     dropdown.classList.add('open');
   }
+
+  inp.addEventListener('focus', () => {
+    renderDropdown(getMatches(inp.value.trim()));
+  });
 
   inp.addEventListener('input', () => {
     renderDropdown(getMatches(inp.value.trim()));
