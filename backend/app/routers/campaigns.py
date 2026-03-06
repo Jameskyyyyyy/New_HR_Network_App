@@ -211,7 +211,7 @@ def duplicate_campaign(campaign_id: int, request: Request):
         # Create new campaign with same settings (no plan limit check — duplicate is exempt)
         new_c = Campaign(
             user_id=user_id,
-            name=src.name,
+            name=f"Copy of {src.name}",
             company_list=src.company_list,
             title_keywords=src.title_keywords,
             location_list=src.location_list,
