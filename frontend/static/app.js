@@ -911,7 +911,10 @@ async function generateDrafts() {
       template_id: isCustom ? null : (templateId || null),
       resume_path: State.resumePath,
       custom_subject: isCustom ? (document.getElementById('custom-subject')?.value.trim() || null) : null,
-      custom_body: isCustom ? (document.getElementById('custom-body')?.innerText.trim() || null) : null,
+      custom_body: isCustom ? (() => {
+        const raw = document.getElementById('custom-body')?.innerText || '';
+        return raw.replace(/\n{3,}/g, '\n\n').trim() || null;
+      })() : null,
     };
     const result = await api('POST', `/api/campaigns/${State.currentCampaign.id}/drafts/generate`, payload);
     if (!result) return;
