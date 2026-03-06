@@ -27,8 +27,7 @@ def _plain_to_html(body: str) -> str:
         inner = para.replace('\n', '<br>')
         parts.append(f'<p style="margin:0 0 1em 0;line-height:1.5;">{inner}</p>')
     return (
-        '<html><body style="font-family:Arial,sans-serif;font-size:14px;'
-        'color:#000;max-width:680px;">'
+        '<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#000;">'
         + ''.join(parts)
         + '</body></html>'
     )
