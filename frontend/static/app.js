@@ -407,28 +407,104 @@ function renderTags(field) {
   `).join('');
 }
 
+const TAG_SUGGESTIONS = {
+  companies: ['Goldman Sachs', 'BlackRock', 'Morgan Stanley', 'Citadel', 'KKR', 'Blackstone',
+              'JPMorgan', 'Lazard', 'Evercore', 'Centerview', 'Bank of America', 'Barclays',
+              'Deutsche Bank', 'UBS', 'Credit Suisse', 'Jefferies', 'Houlihan Lokey', 'PJT Partners'],
+  titles:    ['Investment Banking Analyst', 'Sales and Trading Analyst', 'Private Equity Analyst',
+              'Equity Research Analyst', 'Investment Analyst', 'M&A Analyst', 'Corporate Finance Analyst',
+              'Leveraged Finance Analyst', 'Restructuring Analyst', 'Capital Markets Analyst'],
+  locations: ['New York, NY', 'San Francisco, CA', 'Chicago, IL', 'Boston, MA',
+              'Los Angeles, CA', 'Houston, TX', 'Washington, DC', 'Dallas, TX'],
+  schools:   ['NYU Stern', 'University of Chicago', 'Columbia University', 'Wharton',
+              'Duke University', 'Harvard University', 'Yale University', 'Princeton University',
+              'MIT', 'Stanford University', 'Georgetown', 'Notre Dame'],
+};
+
 function setupTagInput(field, inputId) {
   const inp = document.getElementById(inputId);
   if (!inp) return;
+  const dropdown = document.getElementById(`${field}-dropdown`);
+  let activeIdx = -1;
+
+  function getMatches(q) {
+    if (!q) return [];
+    const lower = q.toLowerCase();
+    return TAG_SUGGESTIONS[field].filter(s =>
+      s.toLowerCase().includes(lower) && !State.tags[field].includes(s)
+    );
+  }
+
+  function renderDropdown(matches) {
+    if (!dropdown) return;
+    if (!matches.length) { dropdown.classList.remove('open'); return; }
+    activeIdx = -1;
+    dropdown.innerHTML = matches.map((m, i) =>
+      `<div class="tag-dropdown-item" data-val="${m}" onmousedown="event.preventDefault()">${m}</div>`
+    ).join('');
+    dropdown.querySelectorAll('.tag-dropdown-item').forEach(el => {
+      el.addEventListener('mousedown', () => {
+        addTag(field, el.dataset.val);
+        inp.value = '';
+        dropdown.classList.remove('open');
+      });
+    });
+    dropdown.classList.add('open');
+  }
+
+  inp.addEventListener('input', () => {
+    renderDropdown(getMatches(inp.value.trim()));
+  });
+
   inp.addEventListener('keydown', e => {
+    const items = dropdown ? [...dropdown.querySelectorAll('.tag-dropdown-item')] : [];
+    if (dropdown?.classList.contains('open') && items.length) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        items[activeIdx]?.classList.remove('active');
+        activeIdx = (activeIdx + 1) % items.length;
+        items[activeIdx].classList.add('active');
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        items[activeIdx]?.classList.remove('active');
+        activeIdx = (activeIdx - 1 + items.length) % items.length;
+        items[activeIdx].classList.add('active');
+        return;
+      }
+      if (e.key === 'Enter' && activeIdx >= 0) {
+        e.preventDefault();
+        addTag(field, items[activeIdx].dataset.val);
+        inp.value = '';
+        dropdown.classList.remove('open');
+        return;
+      }
+      if (e.key === 'Escape') {
+        dropdown.classList.remove('open');
+        return;
+      }
+    }
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       addTag(field, inp.value);
+      dropdown?.classList.remove('open');
     } else if (e.key === 'Backspace' && inp.value === '' && State.tags[field].length) {
       State.tags[field].pop();
       renderTags(field);
     }
   });
-  // Paste support: split pasted text by newlines and/or commas, add each as a tag
+
+  inp.addEventListener('blur', () => {
+    setTimeout(() => dropdown?.classList.remove('open'), 150);
+  });
+
+  // Paste support
   inp.addEventListener('paste', e => {
     e.preventDefault();
     const text = (e.clipboardData || window.clipboardData).getData('text');
     const items = text.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
-    if (items.length <= 1) {
-      // Single item — just insert into the input so user can confirm with Enter
-      inp.value = items[0] || '';
-      return;
-    }
+    if (items.length <= 1) { inp.value = items[0] || ''; return; }
     items.forEach(item => addTag(field, item));
   });
 }
