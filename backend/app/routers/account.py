@@ -87,6 +87,27 @@ def get_usage(request: Request):
         db.close()
 
 
+@router.post("/plan")
+def set_plan(request: Request, payload: dict):
+    """Dev/test endpoint to toggle between free and pro plans."""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    plan = payload.get("plan", "free")
+    if plan not in ("free", "pro"):
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        user.plan = plan
+        db.commit()
+        return {"plan": plan}
+    finally:
+        db.close()
+
+
 @router.post("/gmail/connect")
 def connect_gmail(request: Request):
     user_id = request.session.get("user_id")

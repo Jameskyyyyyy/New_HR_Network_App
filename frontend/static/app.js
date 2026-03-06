@@ -31,6 +31,12 @@ async function api(method, path, body) {
     window.location.href = '/login';
     return null;
   }
+  if (r.status === 403) {
+    const err = await r.json().catch(() => ({ detail: 'Upgrade required' }));
+    const msg = typeof err.detail === 'string' ? err.detail : 'Upgrade required';
+    showUpgradeModal(msg);
+    return null;
+  }
   if (!r.ok) {
     const err = await r.json().catch(() => ({ detail: 'Request failed' }));
     const detail = err.detail;
@@ -41,6 +47,38 @@ async function api(method, path, body) {
   }
   if (r.status === 204) return null;
   return r.json();
+}
+
+// ── Upgrade modal ─────────────────────────────────────────────────────────────
+function showUpgradeModal(msg) {
+  const el = document.getElementById('upgrade-modal-msg');
+  if (el) el.textContent = msg || "You've reached your Free plan limit.";
+  const modal = document.getElementById('upgrade-modal');
+  if (modal) modal.style.display = 'flex';
+}
+function closeUpgradeModal() {
+  const modal = document.getElementById('upgrade-modal');
+  if (modal) modal.style.display = 'none';
+}
+async function upgradeToPro() {
+  try {
+    await api('POST', '/api/account/plan', { plan: 'pro' });
+    closeUpgradeModal();
+    toast('Upgraded to Pro!', 'success');
+    if (State.currentPage === 'billing') loadBilling();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ── Contact Us modal ──────────────────────────────────────────────────────────
+function showContactModal() {
+  const modal = document.getElementById('contact-modal');
+  if (modal) modal.style.display = 'flex';
+}
+function closeContactModal() {
+  const modal = document.getElementById('contact-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 // ── Toast notifications ───────────────────────────────────────────────────────
@@ -1732,22 +1770,50 @@ async function loadBilling() {
   try {
     const usage = await api('GET', '/api/account/usage');
     if (!usage) return;
+    const isPro = usage.plan === 'pro';
     const campaignsLimit = usage.campaigns_limit != null ? usage.campaigns_limit : '∞';
     const contactsLimit = usage.contacts_limit != null ? usage.contacts_limit : '∞';
+
+    const elTitle = document.getElementById('billing-plan-title');
+    const elToggle = document.getElementById('btn-toggle-plan');
+    const elUpgradeBtn = document.getElementById('btn-upgrade-pro');
     const elCampaigns = document.getElementById('billing-campaigns');
     const elCampaignsLimit = document.getElementById('billing-campaigns-limit');
     const elSent = document.getElementById('billing-sent');
     const elProgress = document.getElementById('billing-contacts-progress');
     const elBar = document.getElementById('billing-contacts-bar');
+
+    if (elTitle) elTitle.textContent = isPro ? '⭐ Pro Plan' : '🔓 Free Plan';
+    if (elToggle) {
+      elToggle.textContent = isPro ? '⚙ Switch to Free (test)' : '⚙ Switch to Pro (test)';
+      elToggle._isPro = isPro;
+    }
+    if (elUpgradeBtn) {
+      elUpgradeBtn.textContent = isPro ? 'Current Plan' : 'Upgrade to Pro';
+      elUpgradeBtn.disabled = isPro;
+    }
     if (elCampaigns) elCampaigns.textContent = usage.campaigns_used;
     if (elCampaignsLimit) elCampaignsLimit.textContent = campaignsLimit;
     if (elSent) elSent.textContent = usage.emails_sent;
     if (elProgress) elProgress.textContent = `${usage.contacts_used} / ${contactsLimit}`;
-    if (elBar && usage.contacts_limit) {
-      elBar.style.width = `${Math.min(100, Math.round((usage.contacts_used / usage.contacts_limit) * 100))}%`;
+    if (elBar) {
+      const pct = usage.contacts_limit ? Math.min(100, Math.round((usage.contacts_used / usage.contacts_limit) * 100)) : 5;
+      elBar.style.width = `${pct}%`;
     }
   } catch (e) {
     // Non-fatal
+  }
+}
+
+async function togglePlan() {
+  const btn = document.getElementById('btn-toggle-plan');
+  const isPro = btn && btn._isPro;
+  try {
+    await api('POST', '/api/account/plan', { plan: isPro ? 'free' : 'pro' });
+    toast(isPro ? 'Switched to Free plan' : 'Switched to Pro plan', 'success');
+    loadBilling();
+  } catch (e) {
+    toast(e.message, 'error');
   }
 }
 

@@ -816,8 +816,11 @@
         <!-- Current plan -->
         <div class="card mb-24" style="margin-bottom:24px;">
           <div class="card-header">
-            <span class="card-title">🔓 Free Plan</span>
-            <button class="btn btn-primary">Upgrade →</button>
+            <span class="card-title" id="billing-plan-title">🔓 Free Plan</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:var(--gray-400);" id="btn-toggle-plan" onclick="togglePlan()">⚙ Switch to Pro (test)</button>
+              <button class="btn btn-primary" onclick="showUpgradeModal('Upgrade now to unlock more contacts and campaigns.')">Upgrade →</button>
+            </div>
           </div>
           <div class="card-body">
             <div style="margin-bottom:16px;">
@@ -846,16 +849,16 @@
             </ul>
             <button class="btn btn-ghost full-width" disabled>Current Plan</button>
           </div>
-          <div class="billing-card popular">
+          <div class="billing-card popular" id="billing-card-pro">
             <div class="billing-badge">MOST POPULAR</div>
             <div class="pricing-plan-name">Pro</div>
             <div style="font-size:32px;font-weight:800;margin-bottom:4px;">$29<span style="font-size:14px;font-weight:400;color:var(--gray-500);">/mo</span></div>
             <ul style="list-style:none;margin:16px 0;font-size:13px;">
-              <li style="padding:4px 0;color:var(--green);">✓ 500 contacts/month</li>
+              <li style="padding:4px 0;color:var(--green);">✓ 2,000 contacts/month</li>
               <li style="padding:4px 0;color:var(--green);">✓ Unlimited campaigns</li>
               <li style="padding:4px 0;color:var(--green);">✓ Priority support</li>
             </ul>
-            <button class="btn btn-primary full-width">Upgrade to Pro</button>
+            <button class="btn btn-primary full-width" id="btn-upgrade-pro" onclick="showUpgradeModal('Unlock 2,000 contacts/month and unlimited campaigns.')">Upgrade to Pro</button>
           </div>
           <div class="billing-card">
             <div class="pricing-plan-name">Teams</div>
@@ -865,7 +868,7 @@
               <li style="padding:4px 0;color:var(--green);">✓ Team workspaces</li>
               <li style="padding:4px 0;color:var(--green);">✓ Dedicated support</li>
             </ul>
-            <button class="btn btn-outline full-width">Contact Us</button>
+            <button class="btn btn-outline full-width" onclick="showContactModal()">Contact Us</button>
           </div>
         </div>
       </div>
@@ -924,6 +927,37 @@
     </div>
 
   </main>
+</div>
+
+<!-- Upgrade modal -->
+<div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9200;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:40px 36px;max-width:440px;width:90%;box-shadow:0 24px 80px rgba(0,0,0,0.3);text-align:center;border-top:4px solid var(--amber);">
+    <div style="font-size:40px;margin-bottom:16px;">🔒</div>
+    <div style="font-size:20px;font-weight:800;color:var(--black);margin-bottom:8px;">Upgrade to Pro</div>
+    <div style="font-size:14px;color:var(--gray-500);margin-bottom:20px;line-height:1.5;" id="upgrade-modal-msg">You've reached your Free plan limit.</div>
+    <ul style="list-style:none;text-align:left;margin:0 0 28px;font-size:13px;background:var(--gray-50,#f9f9f9);border-radius:10px;padding:16px 20px;">
+      <li style="padding:4px 0;color:var(--green);">✓ 2,000 contacts / month</li>
+      <li style="padding:4px 0;color:var(--green);">✓ Unlimited campaigns</li>
+      <li style="padding:4px 0;color:var(--green);">✓ Priority support</li>
+    </ul>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button class="btn btn-ghost" style="min-width:120px;padding:12px 20px;font-size:14px;" onclick="closeUpgradeModal()">Maybe Later</button>
+      <button class="btn btn-primary" style="min-width:160px;padding:12px 20px;font-size:14px;font-weight:700;" onclick="upgradeToPro()">Upgrade to Pro →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Contact Us modal -->
+<div id="contact-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9200;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:40px 36px;max-width:420px;width:90%;box-shadow:0 24px 80px rgba(0,0,0,0.3);text-align:center;border-top:4px solid var(--amber);">
+    <div style="font-size:40px;margin-bottom:16px;">📬</div>
+    <div style="font-size:20px;font-weight:800;color:var(--black);margin-bottom:8px;">Contact Us</div>
+    <div style="font-size:14px;color:var(--gray-500);margin-bottom:24px;line-height:1.5;">Interested in the Teams plan or have a question? Reach out to us — we'd love to chat.</div>
+    <div style="background:var(--gray-50,#f9f9f9);border-radius:10px;padding:14px 20px;margin-bottom:28px;font-size:15px;font-weight:600;color:var(--black);">
+      📧 Recruitingkiller@gmail.com
+    </div>
+    <button class="btn btn-primary" style="min-width:160px;padding:12px 20px;font-size:14px;font-weight:700;" onclick="closeContactModal()">Got it</button>
+  </div>
 </div>
 
 <!-- Send confirm modal -->
