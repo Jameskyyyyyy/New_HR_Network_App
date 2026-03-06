@@ -238,12 +238,19 @@ async def upload_resume(campaign_id: int, request: Request, file: UploadFile = F
             raise HTTPException(status_code=404, detail="Campaign not found")
 
         import aiofiles
+        import pathlib
+        pathlib.Path(settings.resume_storage_path).mkdir(parents=True, exist_ok=True)
+
         safe_name = "".join(ch if ch.isalnum() or ch in "._- " else "_" for ch in (file.filename or "resume.pdf"))
         save_path = os.path.join(settings.resume_storage_path, f"{campaign_id}_{safe_name}")
 
-        async with aiofiles.open(save_path, "wb") as f:
+        try:
             content = await file.read()
-            await f.write(content)
+            async with aiofiles.open(save_path, "wb") as f:
+                await f.write(content)
+        except Exception as e:
+            logger.error("Resume save error: %s", e)
+            raise HTTPException(status_code=500, detail=f"Failed to save resume: {e}")
 
         return {"ok": True, "resume_path": save_path, "filename": safe_name, "size": len(content)}
     finally:
