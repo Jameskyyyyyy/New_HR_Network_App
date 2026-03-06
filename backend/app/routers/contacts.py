@@ -134,7 +134,13 @@ def generate(payload: GenerateContactsPayload, request: Request):
         )
 
         # Run the search
-        result = generate_contacts(filters, job_context, settings.serpapi_key)
+        try:
+            result = generate_contacts(filters, job_context, settings.serpapi_key)
+        except Exception as search_err:
+            msg = str(search_err)
+            if "429" in msg:
+                raise HTTPException(status_code=503, detail="Search API rate limit reached. Please wait a moment and try again.")
+            raise HTTPException(status_code=502, detail=f"Contact search failed: {msg}")
         raw_contacts = result.rows
 
         # Filter duplicates
