@@ -45,9 +45,11 @@ def send_via_gmail(
     subject: str,
     body: str,
     resume_path: str | None = None,
+    on_token_refresh: Any | None = None,
 ) -> bool:
     try:
         from google.oauth2.credentials import Credentials
+        from google.auth.transport.requests import Request as GoogleRequest
         from googleapiclient.discovery import build
 
         token_data = json.loads(gmail_token_json)
@@ -59,6 +61,17 @@ def send_via_gmail(
             client_secret=settings.google_client_secret,
             scopes=["https://www.googleapis.com/auth/gmail.send"],
         )
+
+        # Proactively refresh if expired
+        if creds.expired and creds.refresh_token:
+            creds.refresh(GoogleRequest())
+            if on_token_refresh:
+                updated = {
+                    "access_token": creds.token,
+                    "refresh_token": creds.refresh_token,
+                    "token_expiry": creds.expiry.isoformat() if creds.expiry else None,
+                }
+                on_token_refresh(json.dumps(updated))
 
         service = build("gmail", "v1", credentials=creds)
         msg = _build_mime_message(to_email, from_email, subject, body, resume_path)

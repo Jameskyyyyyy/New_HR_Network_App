@@ -208,6 +208,10 @@ def send_test(draft_id: int, request: Request):
 
         from ..services.sender import send_via_gmail, simulate_send
         if user.gmail_token_json and not settings.simulate_email_send:
+            def _save_token(new_token_json: str):
+                user.gmail_token_json = new_token_json
+                db.commit()
+
             success = send_via_gmail(
                 gmail_token_json=user.gmail_token_json,
                 to_email=user.email,
@@ -215,6 +219,7 @@ def send_test(draft_id: int, request: Request):
                 subject=f"[TEST] {d.subject}",
                 body=d.body or "",
                 resume_path=d.resume_path,
+                on_token_refresh=_save_token,
             )
         else:
             success = simulate_send(
@@ -223,6 +228,8 @@ def send_test(draft_id: int, request: Request):
                 body=d.body or "",
                 resume_path=d.resume_path,
             )
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to send email — check Gmail connection in Account settings")
         return {"ok": success, "sent_to": user.email}
     finally:
         db.close()
