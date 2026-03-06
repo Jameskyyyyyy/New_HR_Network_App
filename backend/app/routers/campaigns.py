@@ -199,6 +199,76 @@ def create_campaign(payload: CampaignCreate, request: Request):
         db.close()
 
 
+@router.post("/{campaign_id}/duplicate")
+def duplicate_campaign(campaign_id: int, request: Request):
+    user_id = _require_user(request)
+    db = SessionLocal()
+    try:
+        src = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == user_id).first()
+        if not src:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+
+        # Create new campaign with same settings (no plan limit check — duplicate is exempt)
+        new_c = Campaign(
+            user_id=user_id,
+            name=src.name,
+            company_list=src.company_list,
+            title_keywords=src.title_keywords,
+            location_list=src.location_list,
+            target_schools=src.target_schools,
+            seniority_levels=src.seniority_levels,
+            target_count=src.target_count,
+            status=CampaignStatus.draft,
+        )
+        db.add(new_c)
+        db.flush()  # get new_c.id
+
+        # Copy all contacts
+        contact_map: dict[int, int] = {}
+        for ct in src.contacts:
+            new_ct = Contact(
+                campaign_id=new_c.id,
+                first_name=ct.first_name,
+                last_name=ct.last_name,
+                title=ct.title,
+                company=ct.company,
+                location=ct.location,
+                school=ct.school,
+                linkedin_url=ct.linkedin_url,
+                email=ct.email,
+                fit_score=ct.fit_score,
+                selected=ct.selected,
+            )
+            db.add(new_ct)
+            db.flush()
+            contact_map[ct.id] = new_ct.id
+
+        # Copy all drafts (keeping subject, body, resume, template; reset status to generated)
+        for d in src.drafts:
+            new_contact_id = contact_map.get(d.contact_id)
+            if new_contact_id is None:
+                continue
+            new_d = Draft(
+                campaign_id=new_c.id,
+                contact_id=new_contact_id,
+                subject=d.subject,
+                body=d.body,
+                status=DraftStatus.generated,
+                resume_path=d.resume_path,
+                template_id=d.template_id,
+            )
+            db.add(new_d)
+
+        db.commit()
+        db.refresh(new_c)
+        result = _serialize_campaign(new_c)
+        result["contact_count"] = len(src.contacts)
+        result["sent_count"] = 0
+        return {"id": new_c.id, "campaign": result}
+    finally:
+        db.close()
+
+
 @router.put("/{campaign_id}")
 def update_campaign(campaign_id: int, payload: CampaignUpdate, request: Request):
     user_id = _require_user(request)

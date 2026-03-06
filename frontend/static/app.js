@@ -310,10 +310,28 @@ function renderCampaignRow(c) {
       <td style="color:var(--gray-400);font-size:12px;">${formatDate(c.created_at)}</td>
       <td style="text-align:right;">
         <button class="btn btn-ghost" style="height:28px;font-size:11px;" onclick="openCampaign('${c.id}')">Open</button>
+        <button class="btn btn-ghost" style="height:28px;font-size:11px;margin-left:4px;" onclick="duplicateCampaign(event,'${c.id}')">Duplicate</button>
         <button class="btn btn-danger" style="height:28px;font-size:11px;margin-left:4px;" onclick="deleteCampaign('${c.id}')">Delete</button>
       </td>
     </tr>
   `;
+}
+
+async function duplicateCampaign(evt, id) {
+  evt.stopPropagation();
+  const btn = evt.target;
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    await api('POST', `/api/campaigns/${id}/duplicate`);
+    toast('Campaign duplicated', 'success');
+    await loadCampaigns();
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Duplicate';
+  }
 }
 
 async function deleteCampaign(id) {
