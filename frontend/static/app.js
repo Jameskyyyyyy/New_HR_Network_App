@@ -184,7 +184,7 @@ function renderRecentCampaigns(campaigns) {
   const tbody = document.getElementById('recent-campaigns-tbody');
   if (!tbody) return;
   if (!campaigns.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray-400);padding:32px;">No campaigns yet. <a href="#" onclick="openNewCampaign()" style="color:var(--amber);">Create your first one →</a></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray-400);padding:32px;">No outreaches yet. <a href="#" onclick="openNewCampaign()" style="color:var(--amber);">Create your first one →</a></td></tr>';
     return;
   }
   tbody.innerHTML = campaigns.map(c => `
@@ -292,7 +292,7 @@ function filterCampaigns(status) {
   const tbody = document.getElementById('campaigns-tbody');
   if (!tbody) return;
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:40px;">No campaigns found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:40px;">No outreaches found.</td></tr>';
     return;
   }
   tbody.innerHTML = list.map(c => renderCampaignRow(c)).join('');
@@ -324,7 +324,7 @@ async function duplicateCampaign(evt, id) {
   btn.textContent = '...';
   try {
     await api('POST', `/api/campaigns/${id}/duplicate`);
-    toast('Campaign duplicated', 'success');
+    toast('Outreach duplicated', 'success');
     await loadCampaigns();
   } catch (e) {
     toast(e.message, 'error');
@@ -335,10 +335,10 @@ async function duplicateCampaign(evt, id) {
 }
 
 async function deleteCampaign(id) {
-  if (!confirm('Delete this campaign? This cannot be undone.')) return;
+  if (!confirm('Delete this outreach? This cannot be undone.')) return;
   try {
     await api('DELETE', `/api/campaigns/${id}`);
-    toast('Campaign deleted', 'success');
+    toast('Outreach deleted', 'success');
     await loadCampaigns();
   } catch (e) {
     toast(e.message, 'error');
@@ -609,7 +609,7 @@ function toggleSwitch(name) {
 async function generateContacts() {
   const name = document.getElementById('w-name')?.value.trim();
   if (!name) {
-    toast('Campaign name is required', 'error');
+    toast('Outreach name is required', 'error');
     document.getElementById('w-name')?.focus();
     return;
   }
@@ -906,7 +906,7 @@ function getAvatarColor(company) {
 
 function exportCSV() {
   if (!State.currentCampaign?.id) {
-    toast('No active campaign', 'error');
+    toast('No active outreach', 'error');
     return;
   }
   window.location.href = `/api/campaigns/${State.currentCampaign.id}/contacts/export`;
@@ -1009,7 +1009,7 @@ async function handleFileSelect(e) {
     return;
   }
   if (!State.currentCampaign?.id) {
-    toast('No active campaign — please generate contacts first', 'error');
+    toast('No active outreach — please generate contacts first', 'error');
     return;
   }
 
@@ -1117,7 +1117,7 @@ async function loadTemplatesForStep2() {
 
 async function generateDrafts() {
   if (!State.currentCampaign?.id) {
-    toast('No active campaign', 'error');
+    toast('No active outreach', 'error');
     return;
   }
   if (!State.resumePath && !document.getElementById('upload-success')?.classList.contains('hidden') === false) {
@@ -1558,11 +1558,11 @@ async function sendCampaign() {
       : null,
   };
 
-  showLoading('Sending campaign...');
+  showLoading('Sending outreach...');
   try {
     const result = await api('POST', '/api/send', payload);
     if (!result) return;
-    toast(`Campaign launched! ${approvedCount} emails queued.`, 'success');
+    toast(`Outreach launched! ${approvedCount} emails queued.`, 'success');
     State.currentCampaign = null;
     State.drafts = [];
     State.contacts = [];
@@ -1957,14 +1957,14 @@ function closeConfirmModal() {
 
 function confirmDeleteAll() {
   showConfirmModal(
-    'Delete all campaigns?',
-    'This will permanently remove all campaigns, contacts, and drafts. This cannot be undone.',
+    'Delete all outreaches?',
+    'This will permanently remove all outreaches, contacts, and drafts. This cannot be undone.',
     async () => {
-      showLoading('Deleting all campaigns...');
+      showLoading('Deleting all outreaches...');
       try {
         await api('DELETE', '/api/campaigns/all');
         State.campaigns = [];
-        toast('All campaigns deleted', 'success');
+        toast('All outreaches deleted', 'success');
         filterCampaigns();
       } catch (e) {
         toast(e.message, 'error');

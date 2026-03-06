@@ -27,7 +27,7 @@
         <span class="nav-icon">📊</span> Dashboard
       </button>
       <button class="nav-item" onclick="showPage('campaigns')" id="nav-campaigns">
-        <span class="nav-icon">📋</span> Campaigns
+        <span class="nav-icon">📋</span> Outreaches
         <span class="nav-badge" id="campaigns-badge">0</span>
       </button>
       <button class="nav-item" onclick="showPage('templates')" id="nav-templates">
@@ -42,7 +42,7 @@
     </nav>
     <!-- New Campaign CTA -->
     <div class="sidebar-new-btn">
-      <button class="btn-new-campaign" onclick="openNewCampaign()"><span style="font-size:18px;">🚀</span> New Campaign</button>
+      <button class="btn-new-campaign" onclick="openNewCampaign()"><span style="font-size:18px;">🚀</span> New Coffee Chat</button>
     </div>
 
     <div class="sidebar-footer">
@@ -89,14 +89,14 @@
           <div style="font-size:18px;font-weight:700;color:white;" id="welcome-msg">Good morning 👋</div>
           <div style="font-size:13px;color:#888;margin-top:2px;" id="welcome-sub">Here's your outreach overview.</div>
         </div>
-        <button class="btn btn-primary btn-lg" onclick="openNewCampaign()">+ New Campaign</button>
+        <button class="btn btn-primary btn-lg" onclick="openNewCampaign()">+ New Coffee Chat</button>
       </div>
 
       <div class="page-content">
         <!-- Stats -->
         <div class="stats-row cols-5">
           <div class="stat-card blue">
-            <div class="stat-label">Campaigns</div>
+            <div class="stat-label">Outreaches</div>
             <div class="stat-value" id="stat-campaigns">0</div>
           </div>
           <div class="stat-card amber">
@@ -154,7 +154,7 @@
         <!-- Recent campaigns table -->
         <div class="card mt-16" style="margin-top:20px;">
           <div class="card-header">
-            <span class="card-title">Recent Campaigns</span>
+            <span class="card-title">Recent Outreaches</span>
             <button class="btn btn-ghost" onclick="showPage('campaigns')" style="font-size:12px;">View All →</button>
           </div>
           <div class="table-wrapper">
@@ -168,7 +168,7 @@
                 </tr>
               </thead>
               <tbody id="recent-campaigns-tbody">
-                <tr><td colspan="4" style="text-align:center;color:var(--gray-400);padding:32px;">No campaigns yet. <a href="#" onclick="openNewCampaign()" style="color:var(--amber);">Create your first one →</a></td></tr>
+                <tr><td colspan="4" style="text-align:center;color:var(--gray-400);padding:32px;">No outreaches yet. <a href="#" onclick="openNewCampaign()" style="color:var(--amber);">Create your first one →</a></td></tr>
               </tbody>
             </table>
           </div>
@@ -180,11 +180,11 @@
     <div id="page-campaigns" class="page-section hidden">
       <div class="page-header">
         <div>
-          <div class="page-title">Campaigns</div>
+          <div class="page-title">Outreaches</div>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-danger" onclick="confirmDeleteAll()">Delete All</button>
-          <button class="btn btn-primary" onclick="openNewCampaign()">+ New Campaign</button>
+          <button class="btn btn-primary" onclick="openNewCampaign()">+ New Coffee Chat</button>
         </div>
       </div>
 
@@ -197,7 +197,7 @@
           <button class="btn btn-ghost" id="tab-ended" onclick="filterCampaigns('ended')">Ended</button>
 
           <div style="margin-left:auto;">
-            <input type="text" class="form-input" style="width:220px;" placeholder="🔍  Search campaigns..." id="campaign-search" oninput="filterCampaigns()">
+            <input type="text" class="form-input" style="width:220px;" placeholder="🔍  Search outreaches..." id="campaign-search" oninput="filterCampaigns()">
           </div>
         </div>
 
@@ -207,7 +207,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>Campaign Name</th>
+                  <th>Outreach Name</th>
                   <th>Contacts</th>
                   <th>Sent</th>
                   <th>Status</th>
@@ -216,7 +216,7 @@
                 </tr>
               </thead>
               <tbody id="campaigns-tbody">
-                <tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:40px;">No campaigns found.</td></tr>
+                <tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:40px;">No outreaches found.</td></tr>
               </tbody>
             </table>
           </div>
@@ -230,7 +230,7 @@
       <div class="step-bar" id="wizard-step-bar">
         <div class="step-item">
           <div class="step-circle current" id="step-circle-1">1</div>
-          <span class="step-text current" id="step-text-1">Campaign Setup</span>
+          <span class="step-text current" id="step-text-1">Outreach Setup</span>
         </div>
         <div class="step-connector"></div>
         <div class="step-item">
@@ -261,14 +261,14 @@
 
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Campaign Setup</span>
+            <span class="card-title">Outreach Setup</span>
             <button class="btn btn-ghost" onclick="showPage('campaigns')">← Back</button>
           </div>
           <div class="card-body">
             <!-- Row 1 -->
             <div class="two-col mb-16">
               <div class="form-group">
-                <label class="form-label">Campaign Name *</label>
+                <label class="form-label">Outreach Name *</label>
                 <input type="text" class="form-input" id="w-name" placeholder="e.g. Goldman Sachs NYC Summer Analyst 2026" maxlength="100">
                 <div style="font-size:11px;color:var(--gray-400);margin-top:4px;text-align:right;" id="w-name-count">0/100</div>
               </div>
@@ -819,7 +819,7 @@
             <span class="card-title" id="billing-plan-title">🔓 Free Plan</span>
             <div style="display:flex;gap:8px;align-items:center;">
               <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:var(--gray-400);" id="btn-toggle-plan" onclick="togglePlan()">⚙ Switch to Pro (test)</button>
-              <button class="btn btn-primary" onclick="showUpgradeModal('Upgrade now to unlock more contacts and campaigns.')">Upgrade →</button>
+              <button class="btn btn-primary" onclick="showUpgradeModal('Upgrade now to unlock more contacts and outreaches.')">Upgrade →</button>
             </div>
           </div>
           <div class="card-body">
@@ -831,7 +831,7 @@
               <div class="progress-bar-wrap"><div class="progress-bar-fill" id="billing-contacts-bar" style="width:0%"></div></div>
             </div>
             <div style="display:flex;gap:32px;font-size:13px;color:var(--gray-500);">
-              <span>Campaigns: <strong id="billing-campaigns">0</strong> / <span id="billing-campaigns-limit">3</span></span>
+              <span>Outreaches: <strong id="billing-campaigns">0</strong> / <span id="billing-campaigns-limit">3</span></span>
               <span>Emails sent: <strong id="billing-sent">0</strong></span>
             </div>
           </div>
@@ -844,7 +844,7 @@
             <div style="font-size:32px;font-weight:800;margin-bottom:4px;">$0<span style="font-size:14px;font-weight:400;color:var(--gray-500);">/mo</span></div>
             <ul style="list-style:none;margin:16px 0;font-size:13px;">
               <li style="padding:4px 0;color:var(--green);">✓ 15 contacts total</li>
-              <li style="padding:4px 0;color:var(--green);">✓ 3 campaigns</li>
+              <li style="padding:4px 0;color:var(--green);">✓ 3 outreaches</li>
               <li style="padding:4px 0;color:var(--green);">✓ Gmail OAuth</li>
             </ul>
             <button class="btn btn-ghost full-width" disabled>Current Plan</button>
@@ -855,10 +855,10 @@
             <div style="font-size:32px;font-weight:800;margin-bottom:4px;">$29<span style="font-size:14px;font-weight:400;color:var(--gray-500);">/mo</span></div>
             <ul style="list-style:none;margin:16px 0;font-size:13px;">
               <li style="padding:4px 0;color:var(--green);">✓ 2,000 contacts/month</li>
-              <li style="padding:4px 0;color:var(--green);">✓ Unlimited campaigns</li>
+              <li style="padding:4px 0;color:var(--green);">✓ Unlimited outreaches</li>
               <li style="padding:4px 0;color:var(--green);">✓ Priority support</li>
             </ul>
-            <button class="btn btn-primary full-width" id="btn-upgrade-pro" onclick="showUpgradeModal('Unlock 2,000 contacts/month and unlimited campaigns.')">Upgrade to Pro</button>
+            <button class="btn btn-primary full-width" id="btn-upgrade-pro" onclick="showUpgradeModal('Unlock 2,000 contacts/month and unlimited outreaches.')">Upgrade to Pro</button>
           </div>
           <div class="billing-card">
             <div class="pricing-plan-name">Teams</div>
@@ -937,7 +937,7 @@
     <div style="font-size:14px;color:var(--gray-500);margin-bottom:20px;line-height:1.5;" id="upgrade-modal-msg">You've reached your Free plan limit.</div>
     <ul style="list-style:none;text-align:left;margin:0 0 28px;font-size:13px;background:var(--gray-50,#f9f9f9);border-radius:10px;padding:16px 20px;">
       <li style="padding:4px 0;color:var(--green);">✓ 2,000 contacts / month</li>
-      <li style="padding:4px 0;color:var(--green);">✓ Unlimited campaigns</li>
+      <li style="padding:4px 0;color:var(--green);">✓ Unlimited outreaches</li>
       <li style="padding:4px 0;color:var(--green);">✓ Priority support</li>
     </ul>
     <div style="display:flex;gap:12px;justify-content:center;">
