@@ -344,7 +344,7 @@ function openNewCampaign() {
   State.drafts = [];
   State.tags = {
     companies: [],
-    titles: ['Investment Banking Analyst', 'Sales and Trading Analyst', 'Private Equity Analyst', 'Equity Research Analyst', 'Investment Analyst'],
+    titles: ['Investment Banking Analyst'],
     locations: [],
     schools: [],
   };
@@ -360,7 +360,7 @@ function resetWizardForm() {
   if (countEl) countEl.value = '10';
   // Reset tags — titles get default values, others clear
   State.tags.companies = [];
-  State.tags.titles = ['Investment Banking Analyst', 'Sales and Trading Analyst', 'Private Equity Analyst', 'Equity Research Analyst', 'Investment Analyst'];
+  State.tags.titles = ['Investment Banking Analyst'];
   State.tags.locations = [];
   State.tags.schools = [];
   ['companies', 'titles', 'locations', 'schools'].forEach(f => renderTags(f));
