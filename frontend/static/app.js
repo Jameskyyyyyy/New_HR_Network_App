@@ -138,7 +138,7 @@ async function loadDashboard() {
     const recent = stats.recent_campaigns || [];
     renderRecentCampaigns(recent);
   } catch (e) {
-    toast(e.message, 'error');
+    // Non-fatal: dashboard stats fail silently
   }
 }
 
