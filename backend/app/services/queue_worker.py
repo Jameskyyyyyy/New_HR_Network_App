@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from ..config import settings
-from ..models.entities import Draft, DraftStatus, SendJob, SendJobStatus, User
+from ..models.entities import Campaign, CampaignStatus, Draft, DraftStatus, SendJob, SendJobStatus, User
 from .sender import send_via_gmail, simulate_send
 
 logger = logging.getLogger(__name__)
@@ -83,4 +83,19 @@ def process_due_send_jobs(db: Session, limit: int = 50) -> dict[str, Any]:
             logger.exception("Error processing job %s", job.id)
 
     db.commit()
+
+    # Mark campaigns as ended if no queued jobs remain
+    campaign_ids = {job.campaign_id for job in jobs}
+    for campaign_id in campaign_ids:
+        remaining = (
+            db.query(SendJob)
+            .filter(SendJob.campaign_id == campaign_id, SendJob.status == SendJobStatus.queued)
+            .count()
+        )
+        if remaining == 0:
+            campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+            if campaign and campaign.status == CampaignStatus.sending:
+                campaign.status = CampaignStatus.ended
+    db.commit()
+
     return {"sent": sent, "failed": failed, "total": len(jobs)}
