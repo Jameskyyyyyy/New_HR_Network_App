@@ -4,6 +4,7 @@ import base64
 import json
 import logging
 import os
+import re
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
