@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import html as html_mod
 import json
 import logging
 import os
@@ -16,6 +17,23 @@ from ..config import settings
 logger = logging.getLogger(__name__)
 
 
+def _plain_to_html(body: str) -> str:
+    """Convert plain-text body to HTML preserving paragraph spacing."""
+    text = body.replace('\r\n', '\n').replace('\r', '\n')
+    escaped = html_mod.escape(text)
+    paragraphs = escaped.split('\n\n')
+    parts = []
+    for para in paragraphs:
+        inner = para.replace('\n', '<br>')
+        parts.append(f'<p style="margin:0 0 1em 0;line-height:1.5;">{inner}</p>')
+    return (
+        '<html><body style="font-family:Arial,sans-serif;font-size:14px;'
+        'color:#000;max-width:680px;">'
+        + ''.join(parts)
+        + '</body></html>'
+    )
+
+
 def _build_mime_message(
     to_email: str,
     from_email: str,
@@ -28,12 +46,15 @@ def _build_mime_message(
     msg["From"] = from_email
     msg["Subject"] = subject
 
-    msg.attach(MIMEText(body, "plain", "utf-8"))
+    # multipart/alternative so clients pick the best version (HTML preferred)
+    alt = MIMEMultipart("alternative")
+    alt.attach(MIMEText(body, "plain", "utf-8"))
+    alt.attach(MIMEText(_plain_to_html(body), "html", "utf-8"))
+    msg.attach(alt)
 
     if resume_path and os.path.exists(resume_path):
         with open(resume_path, "rb") as f:
             part = MIMEApplication(f.read(), Name=Path(resume_path).name)
-        # Strip leading "{campaign_id}_" prefix so recipient sees original filename
         display_name = re.sub(r"^\d+_", "", Path(resume_path).name)
         part["Content-Disposition"] = f'attachment; filename="{display_name}"'
         msg.attach(part)
