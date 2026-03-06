@@ -822,13 +822,13 @@
           <div class="card-body">
             <div style="margin-bottom:16px;">
               <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
-                <span>Contacts generated this month</span>
-                <span class="font-mono">0 / 200</span>
+                <span>Contacts generated (total)</span>
+                <span class="font-mono" id="billing-contacts-progress">0 / 15</span>
               </div>
-              <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:0%"></div></div>
+              <div class="progress-bar-wrap"><div class="progress-bar-fill" id="billing-contacts-bar" style="width:0%"></div></div>
             </div>
             <div style="display:flex;gap:32px;font-size:13px;color:var(--gray-500);">
-              <span>Campaigns: <strong id="billing-campaigns">0</strong> / 25</span>
+              <span>Campaigns: <strong id="billing-campaigns">0</strong> / <span id="billing-campaigns-limit">3</span></span>
               <span>Emails sent: <strong id="billing-sent">0</strong></span>
             </div>
           </div>
@@ -840,8 +840,8 @@
             <div class="pricing-plan-name">Free</div>
             <div style="font-size:32px;font-weight:800;margin-bottom:4px;">$0<span style="font-size:14px;font-weight:400;color:var(--gray-500);">/mo</span></div>
             <ul style="list-style:none;margin:16px 0;font-size:13px;">
-              <li style="padding:4px 0;color:var(--green);">✓ 200 contacts/month</li>
-              <li style="padding:4px 0;color:var(--green);">✓ 25 campaigns</li>
+              <li style="padding:4px 0;color:var(--green);">✓ 15 contacts total</li>
+              <li style="padding:4px 0;color:var(--green);">✓ 3 campaigns</li>
               <li style="padding:4px 0;color:var(--green);">✓ Gmail OAuth</li>
             </ul>
             <button class="btn btn-ghost full-width" disabled>Current Plan</button>

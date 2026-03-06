@@ -1730,12 +1730,22 @@ function loadStarterTemplate(type) {
 // ── Billing ───────────────────────────────────────────────────────────────────
 async function loadBilling() {
   try {
-    const stats = await api('GET', '/api/campaigns/stats');
-    if (!stats) return;
-    const el1 = document.getElementById('billing-campaigns');
-    const el2 = document.getElementById('billing-sent');
-    if (el1) el1.textContent = stats.total_campaigns || 0;
-    if (el2) el2.textContent = stats.total_sent || 0;
+    const usage = await api('GET', '/api/account/usage');
+    if (!usage) return;
+    const campaignsLimit = usage.campaigns_limit != null ? usage.campaigns_limit : '∞';
+    const contactsLimit = usage.contacts_limit != null ? usage.contacts_limit : '∞';
+    const elCampaigns = document.getElementById('billing-campaigns');
+    const elCampaignsLimit = document.getElementById('billing-campaigns-limit');
+    const elSent = document.getElementById('billing-sent');
+    const elProgress = document.getElementById('billing-contacts-progress');
+    const elBar = document.getElementById('billing-contacts-bar');
+    if (elCampaigns) elCampaigns.textContent = usage.campaigns_used;
+    if (elCampaignsLimit) elCampaignsLimit.textContent = campaignsLimit;
+    if (elSent) elSent.textContent = usage.emails_sent;
+    if (elProgress) elProgress.textContent = `${usage.contacts_used} / ${contactsLimit}`;
+    if (elBar && usage.contacts_limit) {
+      elBar.style.width = `${Math.min(100, Math.round((usage.contacts_used / usage.contacts_limit) * 100))}%`;
+    }
   } catch (e) {
     // Non-fatal
   }

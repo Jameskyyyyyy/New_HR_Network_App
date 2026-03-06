@@ -54,6 +54,14 @@ def create_app() -> FastAPI:
     def _startup():
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created/verified")
+        # Add plan column to users table if it doesn't exist (SQLite migration)
+        from sqlalchemy import text
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR(20) NOT NULL DEFAULT 'free'"))
+                conn.commit()
+        except Exception:
+            pass  # Column already exists
 
         # Start background send worker
         stop_event = threading.Event()

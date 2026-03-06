@@ -12,7 +12,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..database import SessionLocal
-from ..models.entities import Campaign, CampaignStatus, Contact, Draft, DraftStatus, SendJob, SendJobStatus
+from ..models.entities import Campaign, CampaignStatus, Contact, Draft, DraftStatus, SendJob, SendJobStatus, User
+from ..routers.account import FREE_CAMPAIGN_LIMIT
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/campaigns", tags=["campaigns"])
@@ -172,6 +173,14 @@ def create_campaign(payload: CampaignCreate, request: Request):
     user_id = _require_user(request)
     db = SessionLocal()
     try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if user and (user.plan or "free") == "free":
+            count = db.query(Campaign).filter(Campaign.user_id == user_id).count()
+            if count >= FREE_CAMPAIGN_LIMIT:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Free plan limit: max {FREE_CAMPAIGN_LIMIT} campaigns. Upgrade to Pro to create more.",
+                )
         c = Campaign(
             user_id=user_id,
             name=payload.name,

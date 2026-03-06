@@ -41,6 +41,7 @@ class User(Base):
     gmail_token_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     gmail_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     gmail_connected_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    plan: Mapped[str] = mapped_column(String(20), default="free", server_default="free")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     campaigns: Mapped[list["Campaign"]] = relationship("Campaign", back_populates="user")

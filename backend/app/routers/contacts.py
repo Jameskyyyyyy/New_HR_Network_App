@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..database import SessionLocal
-from ..models.entities import Campaign, Contact
+from ..models.entities import Campaign, Contact, User
+from ..routers.account import FREE_CONTACT_LIMIT
 from ..services.contact_generation import JobContextLike, generate_contacts
 
 logger = logging.getLogger(__name__)
@@ -89,6 +90,18 @@ def generate(payload: GenerateContactsPayload, request: Request):
 
         db.commit()
         db.refresh(campaign)
+
+        # Free plan: max 15 contacts total across all campaigns
+        user = db.query(User).filter(User.id == user_id).first()
+        if user and (user.plan or "free") == "free":
+            all_campaign_ids = [c.id for c in db.query(Campaign).filter(Campaign.user_id == user_id).all()]
+            total_contacts = db.query(Contact).filter(Contact.campaign_id.in_(all_campaign_ids)).count() if all_campaign_ids else 0
+            if total_contacts >= FREE_CONTACT_LIMIT:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Free plan limit: max {FREE_CONTACT_LIMIT} contacts total. Upgrade to Pro to search more.",
+                )
+            payload.target_count = min(payload.target_count, FREE_CONTACT_LIMIT - total_contacts)
 
         # Get previously sent emails for deduplication
         previously_sent: set[str] = set()
