@@ -792,6 +792,14 @@ function selectTop(n) {
   toast(`Selected top ${Math.min(n, State.contacts.length)} contacts`, 'success');
 }
 
+function selectAll() {
+  State.contacts.forEach(c => { c.selected = true; });
+  State.filteredContacts.forEach(c => { c.selected = true; });
+  renderContactsTable(State.filteredContacts.length ? State.filteredContacts : State.contacts);
+  updateSelectionCount();
+  toast(`Selected all ${State.contacts.length} contacts`, 'success');
+}
+
 function clearSelections() {
   State.contacts.forEach(c => { c.selected = false; });
   State.filteredContacts.forEach(c => { c.selected = false; });
@@ -1453,13 +1461,30 @@ function updateSendSummary() {
   }
 }
 
+let _sendConfirmResolve = null;
+
+function showSendConfirmModal(count) {
+  const modal = document.getElementById('send-confirm-modal');
+  const body = document.getElementById('send-confirm-body');
+  if (body) body.textContent = `Send ${count} email${count !== 1 ? 's' : ''}? This cannot be undone.`;
+  if (modal) { modal.style.display = 'flex'; }
+  return new Promise(resolve => { _sendConfirmResolve = resolve; });
+}
+
+function closeSendConfirmModal(confirmed) {
+  const modal = document.getElementById('send-confirm-modal');
+  if (modal) modal.style.display = 'none';
+  if (_sendConfirmResolve) { _sendConfirmResolve(confirmed); _sendConfirmResolve = null; }
+}
+
 async function sendCampaign() {
   const approvedCount = State.drafts.filter(d => d.status === 'approved').length;
   if (approvedCount === 0) {
     toast('No approved drafts to send', 'error');
     return;
   }
-  if (!confirm(`Send ${approvedCount} email${approvedCount !== 1 ? 's' : ''}? This cannot be undone.`)) return;
+  const confirmed = await showSendConfirmModal(approvedCount);
+  if (!confirmed) return;
 
   const sendMode = document.getElementById('send-mode')?.value || 'now';
   const payload = {
