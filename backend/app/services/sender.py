@@ -32,7 +32,9 @@ def _build_mime_message(
     if resume_path and os.path.exists(resume_path):
         with open(resume_path, "rb") as f:
             part = MIMEApplication(f.read(), Name=Path(resume_path).name)
-        part["Content-Disposition"] = f'attachment; filename="{Path(resume_path).name}"'
+        # Strip leading "{campaign_id}_" prefix so recipient sees original filename
+        display_name = re.sub(r"^\d+_", "", Path(resume_path).name)
+        part["Content-Disposition"] = f'attachment; filename="{display_name}"'
         msg.attach(part)
 
     return msg
