@@ -665,6 +665,9 @@ function renderContactsTable(contacts) {
         <td>
           <span class="fit-badge ${fitClass}">${fit}</span>
         </td>
+        <td>
+          <button class="btn-icon-edit" onclick="openContactEditModal(${c.id})" title="Edit contact">✏️</button>
+        </td>
       </tr>
     `;
   }).join('');
@@ -676,6 +679,57 @@ function renderContactsTable(contacts) {
     const someSelected = contacts.some(c => c.selected);
     allCb.checked = allSelected;
     allCb.indeterminate = someSelected && !allSelected;
+  }
+}
+
+// ── Contact Edit Modal ────────────────────────────────────────────────────────
+let _editingContactId = null;
+
+function openContactEditModal(contactId) {
+  const c = State.contacts.find(x => x.id === contactId);
+  if (!c) return;
+  _editingContactId = contactId;
+  document.getElementById('edit-first-name').value = c.first_name || '';
+  document.getElementById('edit-last-name').value  = c.last_name  || '';
+  document.getElementById('edit-title').value      = c.title      || c.job_title || '';
+  document.getElementById('edit-company').value    = c.company    || '';
+  document.getElementById('edit-location').value   = c.location   || c.city || '';
+  document.getElementById('edit-school').value     = c.school     || '';
+  document.getElementById('edit-email').value      = c.email      || '';
+  document.getElementById('contact-edit-modal').classList.remove('hidden');
+}
+
+function closeContactEditModal(e) {
+  if (e && e.target !== document.getElementById('contact-edit-modal')) return;
+  document.getElementById('contact-edit-modal').classList.add('hidden');
+  _editingContactId = null;
+}
+
+async function saveContactEdit() {
+  if (!_editingContactId) return;
+  const payload = {
+    first_name: document.getElementById('edit-first-name').value.trim() || null,
+    last_name:  document.getElementById('edit-last-name').value.trim()  || null,
+    title:      document.getElementById('edit-title').value.trim()      || null,
+    company:    document.getElementById('edit-company').value.trim()    || null,
+    location:   document.getElementById('edit-location').value.trim()   || null,
+    school:     document.getElementById('edit-school').value.trim()     || null,
+    email:      document.getElementById('edit-email').value.trim()      || null,
+  };
+  try {
+    const updated = await api('PATCH', `/api/contacts/${_editingContactId}`, payload);
+    if (!updated) return;
+    // Update local state
+    const idx = State.contacts.findIndex(x => x.id === _editingContactId);
+    if (idx >= 0) Object.assign(State.contacts[idx], updated);
+    const fidx = State.filteredContacts.findIndex(x => x.id === _editingContactId);
+    if (fidx >= 0) Object.assign(State.filteredContacts[fidx], updated);
+    renderContactsTable(State.filteredContacts.length ? State.filteredContacts : State.contacts);
+    document.getElementById('contact-edit-modal').classList.add('hidden');
+    _editingContactId = null;
+    toast('Contact updated', 'success');
+  } catch (e) {
+    toast(e.message, 'error');
   }
 }
 

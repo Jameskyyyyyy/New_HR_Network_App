@@ -179,3 +179,30 @@ def generate(payload: GenerateContactsPayload, request: Request):
         }
     finally:
         db.close()
+
+
+class ContactPatch(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    title: str | None = None
+    company: str | None = None
+    location: str | None = None
+    school: str | None = None
+    email: str | None = None
+
+
+@router.patch("/{contact_id}")
+def patch_contact(contact_id: int, payload: ContactPatch, request: Request):
+    user_id = _require_user(request)
+    db = SessionLocal()
+    try:
+        ct = db.query(Contact).filter(Contact.id == contact_id).first()
+        if not ct:
+            raise HTTPException(status_code=404, detail="Contact not found")
+        for field, val in payload.model_dump(exclude_unset=True).items():
+            setattr(ct, field, val)
+        db.commit()
+        db.refresh(ct)
+        return _serialize_contact(ct)
+    finally:
+        db.close()

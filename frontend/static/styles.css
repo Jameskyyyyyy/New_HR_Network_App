@@ -1126,6 +1126,54 @@ td {
   gap: 10px;
 }
 
+/* ── Contact Edit Modal ─────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal-card {
+  background: white;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+.modal-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.modal-row { display: flex; gap: 14px; }
+.modal-field { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--gray-100);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.btn-icon-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  opacity: 0.5;
+  transition: opacity 0.15s, background 0.15s;
+}
+.btn-icon-edit:hover { opacity: 1; background: var(--gray-100); }
+
 /* ── Checkbox ────────────────────────────────────────────────────────────── */
 .checkbox-amber {
   width: 16px;
