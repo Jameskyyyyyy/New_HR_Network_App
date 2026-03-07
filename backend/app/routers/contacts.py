@@ -226,6 +226,7 @@ def generate(payload: GenerateContactsPayload, request: Request):
                 email=c.get("email"),
                 fit_score=float(raw_data.get("fit_score") or 0),
                 seniority=raw_data.get("detected_level") or None,
+                selected=float(raw_data.get("fit_score") or 0) >= 90,
             )
             db.add(ct)
             saved.append(ct)

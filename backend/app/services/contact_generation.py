@@ -965,13 +965,13 @@ def compute_fit_score(
 
     if detected_level and detected_level != "Unknown":
         if detected_level in (target_levels or []):
-            score += 5
+            score += 10
             reasons.append(f"Detected seniority matches your target ({detected_level}).")
         else:
-            score -= 35
+            score -= 30
             reasons.append(f"Detected seniority ({detected_level}) is outside your selected levels.")
     else:
-        score -= 10
+        score -= 5
 
     if keyword_hit and keyword_hit != custom_keyword_hit:
         score += 8
@@ -985,9 +985,7 @@ def compute_fit_score(
     elif custom_keyword_hit and custom_keyword_score >= 20:
         score += min(16, 6 + custom_keyword_score // 4)
         reasons.append(f"Partial title overlap with job title keyword: {custom_keyword_hit}.")
-    else:
-        score -= 24
-        reasons.append("Weak title overlap with requested job title keywords.")
+    # No penalty when no custom keywords provided (custom_keyword_hit is None)
 
     title_tokens = text_tokens(result_title)
     job_tokens = text_tokens(job_context.job_name)
@@ -1005,7 +1003,7 @@ def compute_fit_score(
         reasons.append("Title overlaps with extracted JD keywords.")
 
     if school_target:
-        score += 7
+        score += 15
         reasons.append(f"Matched school filter ({school_target}).")
 
     if email and email != "N/A":
