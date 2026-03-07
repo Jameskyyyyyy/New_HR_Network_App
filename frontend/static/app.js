@@ -334,15 +334,22 @@ async function duplicateCampaign(evt, id) {
   }
 }
 
-async function deleteCampaign(id) {
-  if (!confirm('Delete this outreach? This cannot be undone.')) return;
-  try {
-    await api('DELETE', `/api/campaigns/${id}`);
-    toast('Outreach deleted', 'success');
-    await loadCampaigns();
-  } catch (e) {
-    toast(e.message, 'error');
-  }
+function deleteCampaign(id) {
+  const campaign = State.campaigns.find(c => String(c.id) === String(id));
+  const name = campaign ? campaign.name : 'this outreach';
+  showConfirmModal(
+    `Delete "${name}"?`,
+    'This will permanently remove this outreach, its contacts, and all drafts. This cannot be undone.',
+    async () => {
+      try {
+        await api('DELETE', `/api/campaigns/${id}`);
+        toast('Outreach deleted', 'success');
+        await loadCampaigns();
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    }
+  );
 }
 
 function openCampaign(id) {
