@@ -62,6 +62,12 @@ def create_app() -> FastAPI:
                 conn.commit()
         except Exception:
             pass  # Column already exists
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE contacts ADD COLUMN seniority VARCHAR(50)"))
+                conn.commit()
+        except Exception:
+            pass  # Column already exists
 
         # Start background send worker
         stop_event = threading.Event()

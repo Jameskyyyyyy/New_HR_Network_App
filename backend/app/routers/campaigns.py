@@ -160,6 +160,7 @@ def get_campaign(campaign_id: int, request: Request):
                 "email": ct.email,
                 "fit_score": ct.fit_score,
                 "selected": ct.selected,
+                "seniority": ct.seniority,
             }
             for ct in c.contacts
         ]

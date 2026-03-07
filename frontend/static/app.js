@@ -964,6 +964,20 @@ async function generateContacts() {
   }
 }
 
+function getSeniorityBadge(seniority) {
+  const cfg = {
+    'Analyst':           { bg: '#dcfce7', color: '#16a34a', border: '#bbf7d0' },
+    'Associate':         { bg: '#dbeafe', color: '#2563eb', border: '#bfdbfe' },
+    'VP':                { bg: '#ede9fe', color: '#7c3aed', border: '#ddd6fe' },
+    'Director':          { bg: '#fef3c7', color: '#d97706', border: '#fde68a' },
+    'Executive Director':{ bg: '#ffedd5', color: '#ea580c', border: '#fed7aa' },
+    'Managing Director': { bg: '#fee2e2', color: '#dc2626', border: '#fecaca' },
+  };
+  if (!seniority || seniority === 'Unknown') return '<span style="color:var(--gray-300);font-size:11px;">—</span>';
+  const s = cfg[seniority] || { bg: '#f3f4f6', color: '#6b7280', border: '#e5e7eb' };
+  return `<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600;background:${s.bg};color:${s.color};border:1px solid ${s.border};white-space:nowrap;">${escHtml(seniority)}</span>`;
+}
+
 function renderContactsTable(contacts) {
   const tbody = document.getElementById('contacts-tbody');
   if (!tbody) return;
@@ -988,7 +1002,7 @@ function renderContactsTable(contacts) {
   set('w-stat-fit', avgFit);
 
   if (!contacts.length) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--gray-400);padding:32px;">No contacts found. Try adjusting your filters.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--gray-400);padding:32px;">No contacts found. Try adjusting your filters.</td></tr>';
     return;
   }
 
@@ -1011,6 +1025,7 @@ function renderContactsTable(contacts) {
           </div>
         </td>
         <td style="font-size:13px;">${escHtml(c.title || c.job_title || '')}</td>
+        <td style="font-size:12px;">${getSeniorityBadge(c.seniority)}</td>
         <td style="font-size:13px;font-weight:500;">${escHtml(c.company || '')}</td>
         <td style="font-size:12px;color:var(--gray-500);">${escHtml(c.location || c.city || '')}</td>
         <td>

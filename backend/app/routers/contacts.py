@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -15,6 +16,51 @@ from ..services.contact_generation import JobContextLike, generate_contacts
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/contacts", tags=["contacts"])
+
+_CITY_CANONICAL: dict[str, str] = {
+    "new york city": "New York", "nyc": "New York", "new york": "New York",
+    "san francisco": "San Francisco", "sf": "San Francisco",
+    "los angeles": "Los Angeles", "la": "Los Angeles",
+    "washington": "Washington, DC", "washington dc": "Washington, DC",
+    "washington d.c.": "Washington, DC",
+    "chicago": "Chicago", "boston": "Boston", "houston": "Houston",
+    "seattle": "Seattle", "denver": "Denver", "miami": "Miami",
+    "atlanta": "Atlanta", "dallas": "Dallas", "austin": "Austin",
+    "charlotte": "Charlotte", "philadelphia": "Philadelphia",
+    "minneapolis": "Minneapolis", "phoenix": "Phoenix", "baltimore": "Baltimore",
+    "pittsburgh": "Pittsburgh", "nashville": "Nashville",
+    "salt lake city": "Salt Lake City", "hartford": "Hartford",
+    "stamford": "Stamford", "greenwich": "Greenwich",
+    "kansas city": "Kansas City", "st. louis": "St. Louis",
+    "columbus": "Columbus", "cleveland": "Cleveland", "cincinnati": "Cincinnati",
+    "indianapolis": "Indianapolis", "milwaukee": "Milwaukee", "detroit": "Detroit",
+    "raleigh": "Raleigh", "richmond": "Richmond", "jacksonville": "Jacksonville",
+    "tampa": "Tampa", "orlando": "Orlando", "san diego": "San Diego",
+    "portland": "Portland", "california": "California",
+}
+
+
+def normalize_location(raw: str | None) -> str | None:
+    if not raw:
+        return raw
+    loc = raw.strip()
+    # "Greater X Area" or "Greater X Metro Area" → X
+    m = re.match(r'^greater\s+(.+?)\s+(?:metro(?:politan)?\s+)?area$', loc, re.I)
+    if m:
+        loc = m.group(1).strip()
+    else:
+        # "X Bay Area" → X (handles "San Francisco Bay Area")
+        loc = re.sub(r'\s+bay\s+area$', '', loc, flags=re.I).strip()
+        # "X Bay" → X (handles "San Francisco Bay")
+        loc = re.sub(r'\s+bay$', '', loc, flags=re.I).strip()
+        # "X Metropolitan Area" / "X Metro Area" → X
+        loc = re.sub(r'\s+metro(?:politan)?\s+area$', '', loc, flags=re.I).strip()
+        # "City, ST" (2-letter state abbreviation) → City (keeps "Washington, DC" via alias below)
+        loc = re.sub(r',\s*[A-Z]{2}$', '', loc).strip()
+        # "City, State Name" → City
+        loc = re.sub(r',\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*$', '', loc).strip()
+    canonical = _CITY_CANONICAL.get(loc.lower())
+    return canonical if canonical else (loc if loc else raw)
 
 
 def _require_user(request: Request) -> int:
@@ -51,6 +97,7 @@ def _serialize_contact(ct: Contact) -> dict[str, Any]:
         "email": ct.email,
         "fit_score": ct.fit_score,
         "selected": ct.selected,
+        "seniority": ct.seniority,
     }
 
 
@@ -173,11 +220,12 @@ def generate(payload: GenerateContactsPayload, request: Request):
                 last_name=c.get("last_name"),
                 title=c.get("title"),
                 company=c.get("company"),
-                location=c.get("city"),      # old app uses "city", DB model uses "location"
+                location=normalize_location(c.get("city")),
                 school=c.get("school"),
                 linkedin_url=c.get("linkedin_url"),
                 email=c.get("email"),
                 fit_score=float(raw_data.get("fit_score") or 0),
+                seniority=raw_data.get("detected_level") or None,
             )
             db.add(ct)
             saved.append(ct)

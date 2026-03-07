@@ -90,6 +90,7 @@ class Contact(Base):
 
     fit_score: Mapped[float] = mapped_column(Float, default=0.0)
     selected: Mapped[bool] = mapped_column(Boolean, default=False)
+    seniority: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     campaign: Mapped["Campaign"] = relationship("Campaign", back_populates="contacts")

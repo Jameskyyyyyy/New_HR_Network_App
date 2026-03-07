@@ -686,8 +686,9 @@ def prioritize_company_rows(rows: list[dict[str, Any]], target_levels: list[str]
             if len(picked) >= max_per_company:
                 break
 
+    # Only fall back to unknown seniority rows, NOT wrong-seniority rows (extra_rows)
     if len(picked) < max_per_company:
-        for row in unknown_rows + extra_rows:
+        for row in unknown_rows:
             if len(picked) >= max_per_company:
                 break
             row_key = candidate_row_identity(row)
